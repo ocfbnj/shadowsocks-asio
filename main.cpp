@@ -1,6 +1,9 @@
+#include <cstdint>
 #include <cstring>
 #include <iostream>
 
+#include <asio/co_spawn.hpp>
+#include <asio/detached.hpp>
 #include <asio/signal_set.hpp>
 #include <asio/ts/internet.hpp>
 #include <asio/ts/io_context.hpp>
@@ -13,7 +16,7 @@ void printUsage() {
                  "    -k <password>              Password of your remote server.\n";
 }
 
-static const char* port;
+static std::uint16_t port;
 static const char* password;
 
 int main(int argc, char* argv[]) {
@@ -26,7 +29,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (!strcmp("-p", argv[i])) {
-            port = argv[++i];
+            port = static_cast<std::uint16_t>(std::stoul(argv[++i]));
         } else if (!strcmp("-k", argv[i])) {
             password = argv[++i];
         }
@@ -42,10 +45,8 @@ int main(int argc, char* argv[]) {
     asio::signal_set signals(ctx, SIGINT, SIGTERM);
     signals.async_wait([&ctx](auto, auto) { ctx.stop(); });
 
-    asio::ip::tcp::endpoint endpoint{asio::ip::tcp::v4(),
-                                     static_cast<unsigned short>(std::stoul(port))};
-    Server server{ctx, endpoint, password};
-    server.doAccept();
+    Server server{password};
+    asio::co_spawn(ctx, server.listen({asio::ip::tcp::v4(), port}), asio::detached);
 
     ctx.run();
     return 0;

@@ -2,29 +2,28 @@ cmake_minimum_required(VERSION 3.16)
 
 project(shadowsocks-asio)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost REQUIRED coroutine)
-find_library(CryptoPP libcryptopp.a)
+find_library(CryptoPP cryptopp)
 
-list(APPEND deps
+list(APPEND LIBS
     cryptopp
     Boost::coroutine)
 
-list(APPEND src
-    socks5.cpp
-    io.cpp
+list(APPEND SRC
     Connection.cpp
     EncryptedConnection.cpp
     Server.cpp
     AEAD.cpp
     main.cpp)
 
-add_executable(shadowsocks-asio ${src})
+add_executable(${CMAKE_PROJECT_NAME} ${SRC})
 
-target_include_directories(shadowsocks-asio PUBLIC ${CMAKE_SOURCE_DIR})
-target_link_libraries(shadowsocks-asio PUBLIC ${deps})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
+target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -fcoroutines)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${LIBS})
 
 add_subdirectory(test)
