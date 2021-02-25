@@ -1,32 +1,69 @@
 #ifndef IO_H
 #define IO_H
 
+#include <concepts>
 #include <cstddef>
-#include <memory>
+#include <cstdint>
 
-#include <asio/spawn.hpp>
+#include <asio/awaitable.hpp>
 #include <asio/ts/buffer.hpp>
 
-struct Reader {
-    virtual ~Reader() = default;
-    virtual std::size_t read(asio::mutable_buffer buffer, asio::yield_context yield) = 0;
+#include "logger.h"
+
+// clang-format off
+
+template <typename T>
+concept Reader = requires (T r, asio::mutable_buffer buf) {
+    { r.read(buf) } -> std::same_as<asio::awaitable<std::size_t>>;
 };
 
-struct Writer {
-    virtual ~Writer() = default;
-    virtual std::size_t write(asio::const_buffer buffer, asio::yield_context yield) = 0;
+template <typename T>
+concept Writer = requires (T w, asio::const_buffer buf) {
+    { w.write(buf) } -> std::same_as<asio::awaitable<std::size_t>>;
 };
 
-struct Closer {
-    virtual ~Closer() = default;
-    virtual void close() = 0;
+template <typename T>
+concept Closer = requires (T c) {
+    { c.close() } -> std::same_as<void>;
 };
 
-struct ReadWriter : Reader, Writer {};
-struct ReadWriteCloser : ReadWriter, Closer {};
+template <typename T>
+concept ReadWriteCloser = Reader<T> && Writer<T> && Closer<T>;
 
-std::size_t readFull(Reader& r, asio::mutable_buffer buf, asio::yield_context yield);
-void ioCopy(std::shared_ptr<ReadWriteCloser> w, std::shared_ptr<ReadWriteCloser> r,
-            asio::yield_context yield);
+template <typename W, typename R> requires ReadWriteCloser<W> && ReadWriteCloser<R>
+asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
+    std::array<std::uint8_t, 32768> buf;
+
+    try {
+        while (true) {
+            std::size_t size = co_await r->read(asio::buffer(buf));
+            co_await w->write(asio::buffer(buf, size));
+        }
+    } catch (const std::system_error& e) {
+        r->close();
+        w->close();
+
+        if (e.code() != asio::error::eof && e.code() != asio::error::operation_aborted) {
+            log(WARN) << e.what() << "\n";
+        }
+    }
+}
+
+// clang-format on
+
+asio::awaitable<std::size_t> readFull(Reader auto& r, asio::mutable_buffer buf) {
+    std::uint8_t* data = static_cast<std::uint8_t*>(buf.data());
+    std::size_t nRead = 0;
+    std::size_t remaining = buf.size();
+
+    while (remaining > 0) {
+        std::size_t n = co_await r.read(asio::buffer(data + nRead, remaining));
+
+        nRead += n;
+        remaining -= n;
+    }
+
+    co_return nRead;
+}
 
 #endif

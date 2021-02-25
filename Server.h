@@ -2,10 +2,9 @@
 #define SERVER_H
 
 #include <cstdint>
-#include <system_error>
 
+#include <asio/awaitable.hpp>
 #include <asio/ts/internet.hpp>
-#include <asio/ts/io_context.hpp>
 #include <asio/ts/socket.hpp>
 
 #include "ChaCha20Poly1305.h"
@@ -14,16 +13,13 @@
 // See https://shadowsocks.org/en/wiki/Protocol.html
 class Server {
 public:
-    Server(asio::io_context& ctx, const asio::ip::tcp::endpoint& endpoint, const char* pwd);
+    Server(const char* pwd);
     ~Server() = default;
 
-    void doAccept();
+    asio::awaitable<void> listen(const asio::ip::tcp::endpoint& endpoint);
 
 private:
-    void acceptHandler(const std::error_code& error, asio::ip::tcp::socket peer);
-
-    asio::io_context& context;
-    asio::ip::tcp::acceptor acceptor;
+    asio::awaitable<void> serverSocket(asio::ip::tcp::socket peer);
 
     std::array<std::uint8_t, ChaCha20Poly1305<>::KeySize> key;
 };
