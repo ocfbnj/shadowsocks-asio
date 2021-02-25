@@ -11,7 +11,7 @@
 #include "Server.h"
 
 void printUsage() {
-    std::cerr << "usage: \n"
+    std::cerr << "Usage: \n"
                  "    -p <server_port>           Port number of your remote server.\n"
                  "    -k <password>              Password of your remote server.\n";
 }
