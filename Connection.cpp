@@ -19,9 +19,9 @@ asio::awaitable<std::size_t> Connection::write(asio::const_buffer buffer) {
 }
 
 void Connection::close() {
-    std::error_code err;
-    socket.cancel(err);
-    if (err) {
-        log(WARN) << err << '\n';
+    try {
+        socket.cancel();
+    } catch (const std::system_error& e) {
+        log(WARN) << e.what() << '\n';
     }
 }
