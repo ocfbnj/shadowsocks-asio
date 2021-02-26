@@ -14,5 +14,5 @@ This project is for learning purposes.
 - Ubuntu Server 20.04 LTS
 - g++-10 (`sudo apt-get install g++-10`)
 - Asio(non-Boost) 1.18.1
-- Boost.Coroutine 1.71 (`sudo apt-get install libboost-coroutine`)
+- Boost.Coroutine 1.71 (`sudo apt-get install libboost-coroutine-dev`)
 - Crypto++ 8.4.0
