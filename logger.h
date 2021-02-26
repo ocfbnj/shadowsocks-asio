@@ -7,12 +7,12 @@
 #include <ctime>
 #include <iostream>
 
-enum LogType {
+enum LogLevel {
     MSG,
     WARN
 };
 
-inline std::ostream& log(LogType type = MSG) {
+inline std::ostream& log(LogLevel type = MSG) {
     std::array<char, 26> buf;
     std::time_t now = std::time(NULL);
     std::tm* s_tm = std::localtime(&now);
