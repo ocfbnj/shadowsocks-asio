@@ -32,7 +32,7 @@ inline std::ostream& log(LogType type = MSG) {
         break;
     }
 
-    return std::cerr << buf.data() << " [" << t << "] ";
+    return std::clog << buf.data() << " [" << t << "] ";
 }
 
 #endif
