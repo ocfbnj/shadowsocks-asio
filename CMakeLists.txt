@@ -10,7 +10,7 @@ find_package(Boost REQUIRED coroutine)
 find_library(CryptoPP cryptopp)
 
 list(APPEND LIBS
-    cryptopp
+    ${CryptoPP}
     Boost::coroutine)
 
 list(APPEND SRC
