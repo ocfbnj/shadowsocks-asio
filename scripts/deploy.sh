@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 name="shadowsocks-asio"
 version="v0.0.1"
