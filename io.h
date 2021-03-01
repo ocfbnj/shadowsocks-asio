@@ -30,7 +30,7 @@ concept Closer = requires (T c) {
 template <typename T>
 concept ReadWriteCloser = Reader<T> && Writer<T> && Closer<T>;
 
-template <typename W, typename R> requires ReadWriteCloser<W> && ReadWriteCloser<R>
+template <ReadWriteCloser W, ReadWriteCloser R>
 asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
     std::array<std::uint8_t, 32768> buf;
 
