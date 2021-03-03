@@ -1,7 +1,9 @@
 #ifndef SOCKS5_H
 #define SOCKS5_H
 
+#include <span>
 #include <string>
+#include <utility>
 
 #include <asio/awaitable.hpp>
 #include <asio/ts/buffer.hpp>
@@ -29,27 +31,27 @@ enum class ATYP {
 // Read a SOCK5 address from r.
 asio::awaitable<void> readTgtAddr(Reader auto& r, std::string& host, std::string& port) {
     std::uint8_t type;
-    co_await readFull(r, asio::buffer(&type, 1));
+    co_await readFull(r, std::span{&type, 1});
 
     ATYP atyp = static_cast<ATYP>(type);
 
     switch (atyp) {
     case ATYP::IPv4: {
         asio::ip::address_v4::bytes_type addr;
-        co_await readFull(r, asio::buffer(addr));
+        co_await readFull(r, addr);
         host = asio::ip::make_address_v4(addr).to_string();
     } break;
     case ATYP::DOMAINNAME: {
         std::uint8_t len;
-        co_await readFull(r, asio::buffer(&len, 1));
+        co_await readFull(r, std::span{&len, 1});
 
         std::string domainName(len, 0);
-        co_await readFull(r, asio::buffer(domainName));
+        co_await readFull(r, std::span{reinterpret_cast<std::uint8_t*>(std::data(domainName)), len});
         host = std::move(domainName);
     } break;
     case ATYP::IPv6: {
         asio::ip::address_v6::bytes_type addr;
-        co_await readFull(r, asio::buffer(addr));
+        co_await readFull(r, addr);
         host = asio::ip::make_address_v6(addr).to_string();
     } break;
     default:
@@ -57,7 +59,7 @@ asio::awaitable<void> readTgtAddr(Reader auto& r, std::string& host, std::string
     }
 
     std::uint16_t p;
-    co_await readFull(r, asio::buffer(&p, 2));
+    co_await readFull(r, std::span{reinterpret_cast<std::uint8_t*>(&p), 2});
     p = ntohs(p);
     port = std::to_string(p);
 }

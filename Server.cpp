@@ -8,8 +8,8 @@
 #include "Server.h"
 #include "logger.h"
 
-Server::Server(const char* pwd) {
-    deriveKey(asio::buffer(pwd, std::strlen(pwd)), key.size(), asio::buffer(key));
+Server::Server(std::string_view pwd) {
+    deriveKey(std::span{(std::uint8_t*)(std::data(pwd)), std::size(pwd)}, key.size(), key);
 }
 
 asio::awaitable<void> Server::listen(const asio::ip::tcp::endpoint& endpoint) {
@@ -28,7 +28,7 @@ asio::awaitable<void> Server::serverSocket(asio::ip::tcp::socket peer) {
     auto executor = co_await asio::this_coro::executor;
 
     try {
-        auto ec = std::make_shared<EncryptedConnection>(std::move(peer), asio::buffer(key));
+        auto ec = std::make_shared<EncryptedConnection>(std::move(peer), key);
         std::string host, port;
         co_await readTgtAddr(*ec, host, port);
 

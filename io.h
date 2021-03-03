@@ -1,24 +1,26 @@
 #ifndef IO_H
 #define IO_H
 
+#include <array>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <span>
+#include <system_error>
 
 #include <asio/awaitable.hpp>
-#include <asio/ts/buffer.hpp>
 
 #include "logger.h"
 
 // clang-format off
 
 template <typename T>
-concept Reader = requires (T r, asio::mutable_buffer buf) {
+concept Reader = requires (T r, std::span<std::uint8_t> buf) {
     { r.read(buf) } -> std::same_as<asio::awaitable<std::size_t>>;
 };
 
 template <typename T>
-concept Writer = requires (T w, asio::const_buffer buf) {
+concept Writer = requires (T w, std::span<std::uint8_t> buf) {
     { w.write(buf) } -> std::same_as<asio::awaitable<std::size_t>>;
 };
 
@@ -36,28 +38,29 @@ asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
 
     try {
         while (true) {
-            std::size_t size = co_await r->read(asio::buffer(buf));
-            co_await w->write(asio::buffer(buf, size));
+            std::size_t size = co_await r->read(buf);
+            co_await w->write(std::span{std::data(buf), size});
         }
     } catch (const std::system_error& e) {
         r->close();
         w->close();
 
         if (e.code() != asio::error::eof && e.code() != asio::error::operation_aborted) {
-            log(WARN) << e.what() << "\n";
+            log(WARN) << e.what() << '\n';
         }
     }
 }
 
 // clang-format on
 
-asio::awaitable<std::size_t> readFull(Reader auto& r, asio::mutable_buffer buf) {
-    std::uint8_t* data = static_cast<std::uint8_t*>(buf.data());
+// readFull reads exactly std::size(buf) bytes from r.
+asio::awaitable<std::size_t> readFull(Reader auto& r, std::span<std::uint8_t> buf) {
+    std::uint8_t* data = std::data(buf);
     std::size_t nRead = 0;
-    std::size_t remaining = buf.size();
+    std::size_t remaining = std::size(buf);
 
     while (remaining > 0) {
-        std::size_t n = co_await r.read(asio::buffer(data + nRead, remaining));
+        std::size_t n = co_await r.read(std::span{data + nRead, remaining});
 
         nRead += n;
         remaining -= n;

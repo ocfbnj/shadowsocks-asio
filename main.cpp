@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <string_view>
 
 #include <asio/co_spawn.hpp>
 #include <asio/detached.hpp>
@@ -17,7 +18,7 @@ void printUsage() {
 }
 
 static std::uint16_t port;
-static const char* password;
+static std::string_view password;
 
 int main(int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) {
@@ -35,7 +36,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (!port || !password) {
+    if (port == 0 || std::empty(password)) {
         printUsage();
         return 0;
     }

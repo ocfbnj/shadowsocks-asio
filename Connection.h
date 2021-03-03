@@ -2,9 +2,9 @@
 #define CONNECTION_H
 
 #include <cstddef>
+#include <span>
 
 #include <asio/awaitable.hpp>
-#include <asio/ts/buffer.hpp>
 #include <asio/ts/internet.hpp>
 #include <asio/ts/socket.hpp>
 
@@ -13,8 +13,8 @@ class Connection {
 public:
     Connection(asio::ip::tcp::socket s);
 
-    asio::awaitable<std::size_t> read(asio::mutable_buffer buffer);
-    asio::awaitable<std::size_t> write(asio::const_buffer buffer);
+    asio::awaitable<std::size_t> read(std::span<std::uint8_t> buffer);
+    asio::awaitable<std::size_t> write(std::span<std::uint8_t> buffer);
     void close();
 
 protected:

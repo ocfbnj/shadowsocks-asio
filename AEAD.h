@@ -2,12 +2,13 @@
 #define AEAD_H
 
 #include <cstddef>
+#include <cstdint>
+#include <span>
 #include <string>
+#include <string_view>
 
-#include <asio/ts/buffer.hpp>
-
-void increment(asio::mutable_buffer num);
-void deriveKey(asio::const_buffer password, std::size_t keySize, asio::mutable_buffer key);
+void increment(std::span<std::uint8_t> num);
+void deriveKey(std::span<std::uint8_t> password, std::size_t keySize, std::span<std::uint8_t> key);
 
 class AEAD {
 public:
@@ -18,16 +19,19 @@ public:
     static constexpr auto MaximumNonceSize = 12;
     static constexpr auto MaximumTagSize = 16;
 
+    static constexpr std::string_view Info = "ss-subkey";
+
     class LengthError : public std::exception {
     public:
-        LengthError(std::string msg, std::size_t expect, std::size_t actual) noexcept
+        LengthError(std::string_view msg, std::size_t expect, std::size_t actual) noexcept
             : msg(msg), expect(expect), actual(actual) {}
         ~LengthError() noexcept = default;
 
         const char* what() const noexcept override {
-            std::string w = msg + ": " + "expecting " + std::to_string(expect) + ", but " +
-                            std::to_string(actual);
-            return w.c_str();
+            std::string w = msg + ": " +
+                            "expecting " + std::to_string(expect) +
+                            ", but " + std::to_string(actual);
+            return std::data(w);
         }
 
     private:
@@ -38,11 +42,11 @@ public:
 
     class DecryptionError : public std::exception {
     public:
-        DecryptionError(std::string msg) noexcept : msg(msg) {}
+        DecryptionError(std::string_view msg) noexcept : msg(msg) {}
         ~DecryptionError() noexcept = default;
 
         const char* what() const noexcept override {
-            return msg.c_str();
+            return std::data(msg);
         }
 
     private:
@@ -51,11 +55,11 @@ public:
 
     virtual ~AEAD() = default;
 
-    virtual void encrypt(asio::const_buffer plaintext, asio::mutable_buffer ciphertext) = 0;
-    virtual void decrypt(asio::const_buffer ciphertext, asio::mutable_buffer plaintext) = 0;
+    virtual void encrypt(std::span<std::uint8_t> plaintext, std::span<std::uint8_t> ciphertext) = 0;
+    virtual void decrypt(std::span<std::uint8_t> ciphertext, std::span<std::uint8_t> plaintext) = 0;
 
     virtual bool salt() = 0;
-    virtual void setSalt(asio::const_buffer salt) = 0;
+    virtual void setSalt(std::span<std::uint8_t> salt) = 0;
 
     virtual std::size_t keySize() = 0;
     virtual std::size_t saltSize() = 0;

@@ -2,6 +2,7 @@
 #define SERVER_H
 
 #include <cstdint>
+#include <string_view>
 
 #include <asio/awaitable.hpp>
 #include <asio/ts/internet.hpp>
@@ -13,7 +14,7 @@
 // See https://shadowsocks.org/en/wiki/Protocol.html
 class Server {
 public:
-    Server(const char* pwd);
+    Server(std::string_view pwd);
     ~Server() = default;
 
     asio::awaitable<void> listen(const asio::ip::tcp::endpoint& endpoint);

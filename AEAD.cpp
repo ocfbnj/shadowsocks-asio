@@ -1,4 +1,4 @@
-#include <cstdint>
+#include <cstring>
 #include <vector>
 
 #define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
@@ -6,38 +6,38 @@
 
 #include "AEAD.h"
 
-void increment(asio::mutable_buffer num) {
-    std::size_t len = num.size();
-    std::uint8_t* data = static_cast<std::uint8_t*>(num.data());
+void increment(std::span<std::uint8_t> num) {
+    std::size_t len = std::size(num);
 
     for (std::size_t i = 0; i != len; i++) {
-        data[i]++;
-        if (data[i] != 0) {
+        num[i]++;
+        if (num[i] != 0) {
             break;
         }
     }
 }
 
-void deriveKey(asio::const_buffer password, std::size_t keySize, asio::mutable_buffer key) {
+void deriveKey(std::span<std::uint8_t> password, std::size_t keySize, std::span<std::uint8_t> key) {
     CryptoPP::Weak1::MD5 md5;
     std::vector<std::uint8_t> buf(keySize);
+    std::uint8_t* pBuf = std::data(buf);
+    std::uint8_t* pPassword = std::data(password);
+    std::size_t passwordLen = std::size(password);
+    std::size_t md5DigestSize = md5.DigestSize();
     std::size_t len = 0;
 
-    const std::uint8_t* pPassword = static_cast<const std::uint8_t*>(password.data());
-    std::size_t passwordLen = password.size();
-
     while (len < keySize) {
-        md5.Update(buf.data(), len);
+        md5.Update(pBuf, len);
         md5.Update(pPassword, passwordLen);
 
-        if (buf.size() - len < md5.DigestSize()) {
-            md5.TruncatedFinal(buf.data() + len, buf.size() - len);
-            len += buf.size() - len;
+        if (keySize - len < md5DigestSize) {
+            md5.TruncatedFinal(pBuf + len, keySize - len);
+            len += keySize - len;
         } else {
-            md5.Final(buf.data() + len);
-            len += md5.DigestSize();
+            md5.Final(pBuf + len);
+            len += md5DigestSize;
         }
     }
 
-    std::memcpy(key.data(), buf.data(), keySize);
+    std::memcpy(std::data(key), pBuf, keySize);
 }
