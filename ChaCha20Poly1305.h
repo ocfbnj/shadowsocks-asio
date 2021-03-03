@@ -1,11 +1,13 @@
 #ifndef CHACHA20POLY1305_H
 #define CHACHA20POLY1305_H
 
+#include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
-#include <cstring>
+#include <ranges>
+#include <span>
 
-#include <asio/ts/buffer.hpp>
 #include <cryptopp/chachapoly.h>
 #include <cryptopp/hkdf.h>
 #include <cryptopp/sha.h>
@@ -20,74 +22,75 @@ public:
     static constexpr auto NonceSize = 12;
     static constexpr auto TagSize = 16;
 
-    static void HKDFSHA1(asio::const_buffer key, asio::const_buffer salt,
-                         asio::mutable_buffer subkey) {
-        if (key.size() != KeySize) {
-            throw AEAD::LengthError{"The length of key is wrong", KeySize, key.size()};
+    static void HKDFSHA1(std::span<std::uint8_t> key, std::span<std::uint8_t> salt,
+                         std::span<std::uint8_t> subkey) {
+        if (std::size(key) != KeySize) {
+            throw AEAD::LengthError{"The length of key is wrong", KeySize, std::size(key)};
         }
 
-        if (subkey.size() != KeySize) {
-            throw AEAD::LengthError{"The length of subkey is wrong", KeySize, subkey.size()};
+        if (std::size(subkey) != KeySize) {
+            throw AEAD::LengthError{"The length of subkey is wrong", KeySize, std::size(subkey)};
         }
 
-        if (salt.size() != SaltSize) {
-            throw AEAD::LengthError{"The length of salt is wrong", SaltSize, salt.size()};
+        if (std::size(salt) != SaltSize) {
+            throw AEAD::LengthError{"The length of salt is wrong", SaltSize, std::size(salt)};
         }
 
-        constexpr auto InfoLen = 9;
-        constexpr std::uint8_t Info[InfoLen] = {'s', 's', '-', 's', 'u', 'b', 'k', 'e', 'y'};
-
-        const std::uint8_t* secret = static_cast<const std::uint8_t*>(key.data());
-        const std::uint8_t* pSalt = static_cast<const std::uint8_t*>(salt.data());
-        std::uint8_t* derived = static_cast<std::uint8_t*>(subkey.data());
+        std::uint8_t* secret = std::data(key);
+        std::uint8_t* pSalt = std::data(salt);
+        std::uint8_t* derived = std::data(subkey);
         CryptoPP::HKDF<CryptoPP::SHA1> hkdf;
 
-        hkdf.DeriveKey(derived, KeySize, secret, KeySize, pSalt, SaltSize, Info, InfoLen);
+        hkdf.DeriveKey(derived, KeySize,
+                       secret, KeySize,
+                       pSalt, SaltSize,
+                       reinterpret_cast<const std::uint8_t*>(std::data(AEAD::Info)),
+                       std::size(AEAD::Info));
     }
 
-    ChaCha20Poly1305(asio::const_buffer key) {
-        if (key.size() != KeySize) {
-            throw AEAD::LengthError{"The length of key is wrong", KeySize, key.size()};
+    ChaCha20Poly1305(std::span<std::uint8_t> key) {
+        if (std::size(key) != KeySize) {
+            throw AEAD::LengthError{"The length of key is wrong", KeySize, std::size(key)};
         }
 
-        std::memcpy(this->key, key.data(), KeySize);
+        std::ranges::copy(key, std::ranges::begin(this->key));
     }
 
-    void encrypt(asio::const_buffer plaintext, asio::mutable_buffer ciphertext) override {
+    void encrypt(std::span<std::uint8_t> plaintext, std::span<std::uint8_t> ciphertext) override {
         checkParameters(plaintext, ciphertext);
 
-        cipher.SetKeyWithIV(this->key, KeySize, nonce, NonceSize);
+        cipher.SetKeyWithIV(std::data(key), KeySize, std::data(nonce), NonceSize);
+        cipher.EncryptAndAuthenticate(std::data(ciphertext),
+                                      std::data(ciphertext) + std::size(plaintext), TagSize,
+                                      std::data(nonce), NonceSize,
+                                      nullptr, 0,
+                                      std::data(plaintext), std::size(plaintext));
 
-        std::uint8_t* pCiphertext = static_cast<std::uint8_t*>(ciphertext.data());
-        const std::uint8_t* message = static_cast<const std::uint8_t*>(plaintext.data());
-        cipher.EncryptAndAuthenticate(pCiphertext, pCiphertext + plaintext.size(), TagSize, nonce,
-                                      NonceSize, nullptr, 0, message, plaintext.size());
-
-        increment(asio::buffer(nonce));
+        increment(nonce);
     }
 
-    void decrypt(asio::const_buffer ciphertext, asio::mutable_buffer plaintext) override {
+    void decrypt(std::span<std::uint8_t> ciphertext, std::span<std::uint8_t> plaintext) override {
         checkParameters(plaintext, ciphertext);
 
-        cipher.SetKeyWithIV(key, KeySize, nonce, NonceSize);
+        cipher.SetKeyWithIV(std::data(key), KeySize, std::data(nonce), NonceSize);
 
-        const std::uint8_t* pCiphertext = static_cast<const std::uint8_t*>(ciphertext.data());
-        std::uint8_t* message = static_cast<std::uint8_t*>(plaintext.data());
-        if (cipher.DecryptAndVerify(message, pCiphertext + plaintext.size(), TagSize, nonce,
-                                    NonceSize, nullptr, 0, pCiphertext,
-                                    plaintext.size()) == false) {
+        if (cipher.DecryptAndVerify(std::data(plaintext),
+                                    std::data(ciphertext) + std::size(plaintext), TagSize,
+                                    std::data(nonce), NonceSize,
+                                    nullptr, 0,
+                                    std::data(ciphertext), std::size(plaintext)) == false) {
             throw AEAD::DecryptionError{"Decryption error"};
         }
 
-        increment(asio::buffer(nonce));
+        increment(nonce);
     }
 
     bool salt() override { return havaSalt; }
 
-    void setSalt(asio::const_buffer salt) override {
+    void setSalt(std::span<std::uint8_t> salt) override {
         std::array<std::uint8_t, KeySize> subkey;
-        ChaCha20Poly1305::HKDFSHA1(asio::buffer(key), salt, asio::buffer(subkey));
-        std::memcpy(key, subkey.data(), KeySize);
+        ChaCha20Poly1305::HKDFSHA1(key, salt, subkey);
+        std::ranges::copy(subkey, std::ranges::begin(key));
 
         havaSalt = true;
     }
@@ -98,21 +101,21 @@ public:
     std::size_t tagSize() override { return TagSize; }
 
 private:
-    void checkParameters(asio::const_buffer plaintext, asio::const_buffer ciphertext) {
-        if (ciphertext.size() != plaintext.size() + TagSize) {
-            throw AEAD::LengthError{"The length of plaintext is wrong", plaintext.size() + TagSize,
-                                    plaintext.size()};
+    void checkParameters(std::span<std::uint8_t> plaintext, std::span<std::uint8_t> ciphertext) {
+        if (std::size(ciphertext) != std::size(plaintext) + TagSize) {
+            throw AEAD::LengthError{"The length of plaintext is wrong", std::size(plaintext) + TagSize,
+                                    std::size(plaintext)};
         }
 
-        if (plaintext.size() > MaximumPayloadSize) {
+        if (std::size(plaintext) > MaximumPayloadSize) {
             throw AEAD::LengthError{"The length of plaintext is too long", MaximumPayloadSize,
-                                    plaintext.size()};
+                                    std::size(plaintext)};
         }
     }
 
     CryptoPP::ChaCha20Poly1305_Final<T_IsEncryption> cipher;
-    std::uint8_t key[KeySize];
-    std::uint8_t nonce[NonceSize]{};
+    std::array<std::uint8_t, KeySize> key;
+    std::array<std::uint8_t, NonceSize> nonce{};
     bool havaSalt = false;
 };
 
