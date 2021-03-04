@@ -36,14 +36,10 @@ public:
             throw AEAD::LengthError{"The length of salt is wrong", SaltSize, std::size(salt)};
         }
 
-        std::uint8_t* secret = std::data(key);
-        std::uint8_t* pSalt = std::data(salt);
-        std::uint8_t* derived = std::data(subkey);
         CryptoPP::HKDF<CryptoPP::SHA1> hkdf;
-
-        hkdf.DeriveKey(derived, KeySize,
-                       secret, KeySize,
-                       pSalt, SaltSize,
+        hkdf.DeriveKey(std::data(subkey), KeySize,
+                       std::data(key), KeySize,
+                       std::data(salt), SaltSize,
                        reinterpret_cast<const std::uint8_t*>(std::data(AEAD::Info)),
                        std::size(AEAD::Info));
     }
