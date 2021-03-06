@@ -1,7 +1,7 @@
 #!/bin/bash
 
 name="shadowsocks-asio"
-version="v0.0.2-alpha"
+version="v0.0.2"
 
 download_file="${name}.tar.gz"
 url="https://github.com/ocfbnj/${name}/releases/download/${version}/${download_file}"
@@ -43,7 +43,7 @@ Type=forking
 ExecStart=${start_file}
 
 [Install]
-WantedBy=mutil-user.target
+WantedBy=default.target
 EOF
 
 # 5. Start service.
