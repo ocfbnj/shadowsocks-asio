@@ -16,4 +16,4 @@ This project is for learning purposes.
 - g++-10 (`sudo apt-get install g++-10`)
 - Asio(non-Boost) 1.18.0 (`vcpkg install asio[coroutine]`)
 - Crypto++ 8.2.0-2 (`vcpkg install cryptopp`)
-- spdlog 1.8.0#1 (`vcpkg install spdlog`)
+- spdlog 1.8.0#2 (`vcpkg install spdlog`)
