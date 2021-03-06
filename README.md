@@ -13,6 +13,5 @@ This project is for learning purposes.
 ## Test on
 - Ubuntu Server 20.04 LTS
 - g++-10 (`sudo apt-get install g++-10`)
-- Asio(non-Boost) 1.18.1
-- Boost.Coroutine 1.71 (`sudo apt-get install libboost-coroutine-dev`)
-- Crypto++ 8.4.0
+- Asio(non-Boost) 1.18.0 (`vcpkg install asio[coroutine]`)
+- Crypto++ 8.2.0-2 (`vcpkg install cryptopp`)

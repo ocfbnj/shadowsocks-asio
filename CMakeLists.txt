@@ -5,13 +5,14 @@ project(shadowsocks-asio)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
-set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost REQUIRED coroutine)
-find_library(CryptoPP cryptopp)
+find_package(asio CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+find_package(cryptopp CONFIG REQUIRED)
 
 list(APPEND LIBS
-    ${CryptoPP}
-    Boost::coroutine)
+    asio::asio
+    spdlog::spdlog
+    cryptopp-static)
 
 list(APPEND SRC
     Connection.cpp
