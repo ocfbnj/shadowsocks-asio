@@ -2,10 +2,10 @@
 #include <iterator>
 
 #include <asio/ts/buffer.hpp>
+#include <spdlog/spdlog.h>
 
 #include "ChaCha20Poly1305.h"
 #include "EncryptedConnection.h"
-#include "logger.h"
 
 EncryptedConnection::EncryptedConnection(asio::ip::tcp::socket s, std::span<std::uint8_t> key)
     : conn(std::move(s)),
@@ -35,7 +35,7 @@ asio::awaitable<std::size_t> EncryptedConnection::read(std::span<std::uint8_t> b
 
         co_return n;
     } catch (const AEAD::DecryptionError& e) {
-        log(WARN) << e.what() << '\n';
+        spdlog::warn(e.what());
     }
 
     co_return 0;
