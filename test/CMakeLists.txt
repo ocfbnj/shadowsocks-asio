@@ -1,9 +1,10 @@
-find_package(GTest CONFIG)
+find_package(GTest CONFIG REQUIRED)
 
 if (GTest_FOUND)
-    list(APPEND deps
-        cryptopp
-        
+    find_package(cryptopp CONFIG REQUIRED)
+
+    list(APPEND LIBS
+        cryptopp-static
         GTest::gtest
         GTest::gtest_main)
 
@@ -11,5 +12,5 @@ if (GTest_FOUND)
         ../AEAD.h
         ../AEAD.cpp
         ../ChaCha20Poly1305.h)
-    target_link_libraries(test ${deps})
+    target_link_libraries(test PRIVATE ${LIBS})
 endif ()
