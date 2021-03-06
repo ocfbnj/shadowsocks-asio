@@ -3,9 +3,9 @@
 
 #include <asio/ts/buffer.hpp>
 #include <asio/use_awaitable.hpp>
+#include <spdlog/spdlog.h>
 
 #include "Connection.h"
-#include "logger.h"
 
 Connection::Connection(asio::ip::tcp::socket s) : socket(std::move(s)) {}
 
@@ -25,6 +25,6 @@ void Connection::close() {
     try {
         socket.cancel();
     } catch (const std::system_error& e) {
-        log(WARN) << e.what() << '\n';
+        spdlog::warn(e.what());
     }
 }

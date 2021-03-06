@@ -9,8 +9,7 @@
 #include <system_error>
 
 #include <asio/awaitable.hpp>
-
-#include "logger.h"
+#include <spdlog/spdlog.h>
 
 // clang-format off
 
@@ -46,7 +45,7 @@ asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
         w->close();
 
         if (e.code() != asio::error::eof && e.code() != asio::error::operation_aborted) {
-            log(WARN) << e.what() << '\n';
+            spdlog::warn(e.what());
         }
     }
 }
