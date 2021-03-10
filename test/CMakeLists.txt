@@ -1,4 +1,4 @@
-find_package(GTest CONFIG REQUIRED)
+find_package(GTest CONFIG)
 
 if (GTest_FOUND)
     find_package(cryptopp CONFIG REQUIRED)
