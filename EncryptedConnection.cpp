@@ -25,20 +25,14 @@ asio::awaitable<std::size_t> EncryptedConnection::read(std::span<std::uint8_t> b
         co_return n;
     }
 
-    try {
-        std::size_t payloadSize = co_await readEncryptedPayload(conn, deC, buf);
-        std::size_t n = std::min(payloadSize, std::size(buffer));
-        std::copy_n(std::begin(buf), n, std::begin(buffer));
+    std::size_t payloadSize = co_await readEncryptedPayload(conn, deC, buf);
+    std::size_t n = std::min(payloadSize, std::size(buffer));
+    std::copy_n(std::begin(buf), n, std::begin(buffer));
 
-        index += n;
-        remaining = payloadSize - n;
+    index += n;
+    remaining = payloadSize - n;
 
-        co_return n;
-    } catch (const AEAD::DecryptionError& e) {
-        spdlog::warn(e.what());
-    }
-
-    co_return 0;
+    co_return n;
 }
 
 asio::awaitable<std::size_t> EncryptedConnection::write(std::span<std::uint8_t> buffer) {
