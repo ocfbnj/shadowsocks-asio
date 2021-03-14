@@ -1,6 +1,7 @@
 #include <asio/co_spawn.hpp>
 #include <asio/detached.hpp>
 #include <asio/ts/buffer.hpp>
+#include <asio/ts/executor.hpp>
 #include <asio/use_awaitable.hpp>
 #include <spdlog/spdlog.h>
 
@@ -20,7 +21,7 @@ asio::awaitable<void> Server::listen(const asio::ip::tcp::endpoint& endpoint) {
 
     while (true) {
         asio::ip::tcp::socket peer = co_await acceptor.async_accept(asio::use_awaitable);
-        asio::co_spawn(executor, serverSocket(std::move(peer)), asio::detached);
+        asio::co_spawn(asio::make_strand(executor), serverSocket(std::move(peer)), asio::detached);
     }
 }
 

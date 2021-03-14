@@ -2,6 +2,8 @@
 #include <cstring>
 #include <iostream>
 #include <string_view>
+#include <thread>
+#include <vector>
 
 #include <asio/co_spawn.hpp>
 #include <asio/detached.hpp>
@@ -46,9 +48,21 @@ int main(int argc, char* argv[]) {
     asio::signal_set signals(ctx, SIGINT, SIGTERM);
     signals.async_wait([&ctx](auto, auto) { ctx.stop(); });
 
+    std::vector<std::thread> threadPool(std::thread::hardware_concurrency());
+    for (std::thread& t : threadPool) {
+        t = std::thread{[&ctx]() { ctx.run(); }};
+    }
+
     Server server{password};
     asio::co_spawn(ctx, server.listen({asio::ip::tcp::v4(), port}), asio::detached);
 
     ctx.run();
+
+    for (std::thread& t : threadPool) {
+        if (t.joinable()) {
+            t.join();
+        }
+    }
+
     return 0;
 }
