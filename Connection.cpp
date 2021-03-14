@@ -25,6 +25,6 @@ void Connection::close() {
     try {
         socket.cancel();
     } catch (const std::system_error& e) {
-        spdlog::warn(e.what());
+        spdlog::debug(e.what());
     }
 }

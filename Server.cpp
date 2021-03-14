@@ -42,7 +42,9 @@ asio::awaitable<void> Server::serverSocket(asio::ip::tcp::socket peer) {
 
         asio::co_spawn(executor, ioCopy(c, ec), asio::detached);
         asio::co_spawn(executor, ioCopy(ec, c), asio::detached);
+    } catch (const AEAD::DecryptionError& err) {
+        spdlog::warn(err.what());
     } catch (const std::exception& e) {
-        spdlog::warn(e.what());
+        spdlog::debug(e.what());
     }
 }
