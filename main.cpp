@@ -10,13 +10,15 @@
 #include <asio/signal_set.hpp>
 #include <asio/ts/internet.hpp>
 #include <asio/ts/io_context.hpp>
+#include <spdlog/spdlog.h>
 
 #include "Server.h"
 
 void printUsage() {
     std::cerr << "Usage: \n"
                  "    -p <server_port>           Port number of your remote server.\n"
-                 "    -k <password>              Password of your remote server.\n";
+                 "    -k <password>              Password of your remote server.\n\n"
+                 "    -V                         Verbose mode.\n";
 }
 
 static std::uint16_t port;
@@ -29,6 +31,10 @@ int main(int argc, char* argv[]) {
         if (!strcmp("--help", argv[i]) || !strcmp("-h", argv[i])) {
             printUsage();
             return 0;
+        }
+
+        if (!strcmp("-V", argv[i])) {
+            spdlog::set_level(spdlog::level::debug);
         }
 
         if (!strcmp("-p", argv[i])) {
