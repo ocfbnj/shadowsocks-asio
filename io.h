@@ -45,7 +45,7 @@ asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
         w->close();
 
         if (e.code() != asio::error::eof && e.code() != asio::error::operation_aborted) {
-            spdlog::warn(e.what());
+            spdlog::debug(e.what());
         }
     }
 }
