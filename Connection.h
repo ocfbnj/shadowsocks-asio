@@ -19,6 +19,9 @@ public:
 
 protected:
     asio::ip::tcp::socket socket;
+
+private:
+    bool closed = false;
 };
 
 #endif

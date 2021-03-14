@@ -22,9 +22,11 @@ asio::awaitable<std::size_t> Connection::write(std::span<std::uint8_t> buffer) {
 }
 
 void Connection::close() {
-    try {
-        socket.cancel();
-    } catch (const std::system_error& e) {
-        spdlog::debug(e.what());
+    if (!closed) {
+        closed = true;
+
+        std::error_code ignoreError;
+        socket.cancel(ignoreError);
+        socket.shutdown(socket.shutdown_send, ignoreError);
     }
 }
