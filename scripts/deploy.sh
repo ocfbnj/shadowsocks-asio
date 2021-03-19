@@ -27,7 +27,7 @@ mkdir -p "/var/log/${name}"
 # 3. Create startup script.
 cat <<EOF > ${start_file}
 #!/bin/sh
-${name} -p ${default_port} -k ${default_password} > ${log_file} &
+${name} -p ${default_port} -k ${default_password} >> ${log_file} &
 EOF
 
 chmod ug+x ${start_file}

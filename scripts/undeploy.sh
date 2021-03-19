@@ -1,7 +1,7 @@
 #!/bin/bash
 
 name="shadowsocks-asio"
-version="v0.0.2-alpha"
+version="v0.0.2"
 
 start_file="/etc/${name}/start.sh"
 bin_file="/usr/local/bin/${name}"
