@@ -2,6 +2,7 @@
 #include <asio/detached.hpp>
 #include <asio/ts/buffer.hpp>
 #include <asio/ts/executor.hpp>
+#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
 #include "EncryptedConnection.h"
@@ -27,6 +28,9 @@ asio::awaitable<void> Server::listen(const asio::ip::tcp::endpoint& endpoint) {
 asio::awaitable<void> Server::serverSocket(TCPSocket peer) {
     auto executor = co_await asio::this_coro::executor;
 
+    auto endpoint = peer.remote_endpoint();
+    std::string peerAddr = fmt::format("{}:{}", endpoint.address().to_string(), endpoint.port());
+
     try {
         auto ec = std::make_shared<EncryptedConnection>(std::move(peer), key);
         std::string host, port;
@@ -43,7 +47,7 @@ asio::awaitable<void> Server::serverSocket(TCPSocket peer) {
         asio::co_spawn(executor, ioCopy(c, ec), asio::detached);
         asio::co_spawn(executor, ioCopy(ec, c), asio::detached);
     } catch (const AEAD::DecryptionError& e) {
-        spdlog::warn(e.what());
+        spdlog::warn("{}: peer {}", e.what(), peerAddr);
     } catch (const std::system_error& e) {
         if (e.code() != asio::error::eof && e.code() != asio::error::operation_aborted) {
             spdlog::debug(e.what());
