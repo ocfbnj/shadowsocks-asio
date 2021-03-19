@@ -1,4 +1,3 @@
-#include <cstdint>
 #include <cstring>
 #include <iostream>
 #include <string_view>
@@ -13,6 +12,7 @@
 #include <spdlog/spdlog.h>
 
 #include "Server.h"
+#include "type.h"
 
 void printUsage() {
     std::cerr << "Usage: \n"
@@ -21,7 +21,7 @@ void printUsage() {
                  "    -V                         Verbose mode.\n";
 }
 
-static std::uint16_t port;
+static u16 port;
 static std::string_view password;
 
 int main(int argc, char* argv[]) {
@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (!strcmp("-p", argv[i])) {
-            port = static_cast<std::uint16_t>(std::stoul(argv[++i]));
+            port = static_cast<u16>(std::stoul(argv[++i]));
         } else if (!strcmp("-k", argv[i])) {
             password = argv[++i];
         }

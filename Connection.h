@@ -1,24 +1,24 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
-#include <cstddef>
-#include <span>
-
 #include <asio/awaitable.hpp>
 #include <asio/ts/internet.hpp>
 #include <asio/ts/socket.hpp>
 
+#include "AsyncObject.h"
+#include "type.h"
+
 // Connection encapsulates a socket for reading and writing.
 class Connection {
 public:
-    Connection(asio::ip::tcp::socket s);
+    Connection(TCPSocket s);
 
-    asio::awaitable<std::size_t> read(std::span<std::uint8_t> buffer);
-    asio::awaitable<std::size_t> write(std::span<std::uint8_t> buffer);
+    asio::awaitable<Size> read(BytesView buffer);
+    asio::awaitable<Size> write(BytesView buffer);
     void close();
 
 protected:
-    asio::ip::tcp::socket socket;
+    TCPSocket socket;
 
 private:
     bool closed = false;
