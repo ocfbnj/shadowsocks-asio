@@ -38,7 +38,7 @@ asio::awaitable<void> Server::serverSocket(TCPSocket peer) {
 
         Resolver r{executor};
         Resolver::results_type results = co_await r.async_resolve(host, port);
-        asio::ip::tcp::endpoint endpoint = *results.begin();
+        const asio::ip::tcp::endpoint& endpoint = *results.begin();
 
         TCPSocket socket{executor};
         co_await socket.async_connect(endpoint);
