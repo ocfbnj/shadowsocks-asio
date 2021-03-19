@@ -6,12 +6,14 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 find_package(asio CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
 add_subdirectory(crypto)
 
 list(APPEND LIBS
     asio::asio
+    fmt::fmt
     spdlog::spdlog
     crypto)
 
