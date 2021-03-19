@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <iterator>
 
 #include <asio/ts/buffer.hpp>
 #include <spdlog/spdlog.h>
@@ -7,17 +6,17 @@
 #include "ChaCha20Poly1305.h"
 #include "EncryptedConnection.h"
 
-EncryptedConnection::EncryptedConnection(asio::ip::tcp::socket s, std::span<std::uint8_t> key)
+EncryptedConnection::EncryptedConnection(TCPSocket s, BytesView key)
     : conn(std::move(s)),
       enC(std::make_unique<ChaCha20Poly1305<true>>(key)),
       deC(std::make_unique<ChaCha20Poly1305<false>>(key)) {}
 
-asio::awaitable<std::size_t> EncryptedConnection::read(std::span<std::uint8_t> buffer) {
+asio::awaitable<Size> EncryptedConnection::read(BytesView buffer) {
     co_await readSalt(conn, deC);
 
     if (remaining > 0) {
-        std::size_t n = std::min(remaining, std::size(buffer));
-        std::copy_n(std::next(std::begin(buf), index), n, std::begin(buffer));
+        Size n = std::min(remaining, buffer.size());
+        std::copy_n(buf.begin() + index, n, buffer.begin());
 
         index += n;
         remaining -= n;
@@ -25,9 +24,9 @@ asio::awaitable<std::size_t> EncryptedConnection::read(std::span<std::uint8_t> b
         co_return n;
     }
 
-    std::size_t payloadSize = co_await readEncryptedPayload(conn, deC, buf);
-    std::size_t n = std::min(payloadSize, std::size(buffer));
-    std::copy_n(std::begin(buf), n, std::begin(buffer));
+    Size payloadSize = co_await readEncryptedPayload(conn, deC, buf);
+    Size n = std::min(payloadSize, buffer.size());
+    std::copy_n(buf.begin(), n, buffer.begin());
 
     index += n;
     remaining = payloadSize - n;
@@ -35,9 +34,10 @@ asio::awaitable<std::size_t> EncryptedConnection::read(std::span<std::uint8_t> b
     co_return n;
 }
 
-asio::awaitable<std::size_t> EncryptedConnection::write(std::span<std::uint8_t> buffer) {
+asio::awaitable<Size> EncryptedConnection::write(BytesView buffer) {
     co_await writeSalt(conn, enC);
-    std::size_t size = co_await writeUnencryptedPayload(conn, enC, buffer);
+    Size size = co_await writeUnencryptedPayload(conn, enC, buffer);
+
     co_return size;
 }
 

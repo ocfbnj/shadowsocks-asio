@@ -8,6 +8,7 @@
 #include <asio/ts/internet.hpp>
 #include <asio/ts/socket.hpp>
 
+#include "AsyncObject.h"
 #include "ChaCha20Poly1305.h"
 
 // Server represents a shadowsocks remote server.
@@ -20,9 +21,9 @@ public:
     asio::awaitable<void> listen(const asio::ip::tcp::endpoint& endpoint);
 
 private:
-    asio::awaitable<void> serverSocket(asio::ip::tcp::socket peer);
+    asio::awaitable<void> serverSocket(TCPSocket peer);
 
-    std::array<std::uint8_t, ChaCha20Poly1305<>::KeySize> key;
+    std::array<u8, ChaCha20Poly1305<>::KeySize> key;
 };
 
 #endif

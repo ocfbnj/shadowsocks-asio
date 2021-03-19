@@ -1,7 +1,6 @@
 #ifndef SOCKS5_H
 #define SOCKS5_H
 
-#include <span>
 #include <string>
 #include <utility>
 
@@ -10,6 +9,7 @@
 #include <asio/ts/internet.hpp>
 
 #include "io.h"
+#include "type.h"
 
 // The maximum length of target address (1 + 1 + 255 + 2).
 constexpr auto MaxAddrLen = 259;
@@ -30,8 +30,8 @@ enum class ATYP {
 
 // Read a SOCK5 address from r.
 asio::awaitable<void> readTgtAddr(Reader auto& r, std::string& host, std::string& port) {
-    std::uint8_t type;
-    co_await readFull(r, std::span{&type, 1});
+    u8 type;
+    co_await readFull(r, BytesView{&type, 1});
 
     ATYP atyp = static_cast<ATYP>(type);
 
@@ -42,11 +42,11 @@ asio::awaitable<void> readTgtAddr(Reader auto& r, std::string& host, std::string
         host = asio::ip::make_address_v4(addr).to_string();
     } break;
     case ATYP::DOMAINNAME: {
-        std::uint8_t len;
-        co_await readFull(r, std::span{&len, 1});
+        u8 len;
+        co_await readFull(r, BytesView{&len, 1});
 
         std::string domainName(len, 0);
-        co_await readFull(r, std::span{reinterpret_cast<std::uint8_t*>(std::data(domainName)), len});
+        co_await readFull(r, BytesView{reinterpret_cast<u8*>(std::data(domainName)), len});
         host = std::move(domainName);
     } break;
     case ATYP::IPv6: {
@@ -58,9 +58,9 @@ asio::awaitable<void> readTgtAddr(Reader auto& r, std::string& host, std::string
         co_return;
     }
 
-    std::uint16_t p;
-    co_await readFull(r, std::span{reinterpret_cast<std::uint8_t*>(&p), 2});
-    p = ntohs(p);
+    u16 p;
+    co_await readFull(r, BytesView{reinterpret_cast<u8*>(&p), 2});
+    p = ::ntohs(p);
     port = std::to_string(p);
 }
 

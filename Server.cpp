@@ -2,15 +2,14 @@
 #include <asio/detached.hpp>
 #include <asio/ts/buffer.hpp>
 #include <asio/ts/executor.hpp>
-#include <asio/use_awaitable.hpp>
 #include <spdlog/spdlog.h>
 
 #include "EncryptedConnection.h"
-#include "SOCKS5.h"
 #include "Server.h"
+#include "socks5.h"
 
 Server::Server(std::string_view pwd) {
-    deriveKey(std::span{(std::uint8_t*)(std::data(pwd)), std::size(pwd)}, key.size(), key);
+    deriveKey(std::span{(u8*)(std::data(pwd)), std::size(pwd)}, key.size(), key);
 }
 
 asio::awaitable<void> Server::listen(const asio::ip::tcp::endpoint& endpoint) {
@@ -20,12 +19,12 @@ asio::awaitable<void> Server::listen(const asio::ip::tcp::endpoint& endpoint) {
     spdlog::info("Listen on {}:{}", endpoint.address().to_string(), endpoint.port());
 
     while (true) {
-        asio::ip::tcp::socket peer = co_await acceptor.async_accept(asio::use_awaitable);
+        TCPSocket peer = co_await acceptor.async_accept(asio::use_awaitable);
         asio::co_spawn(asio::make_strand(executor), serverSocket(std::move(peer)), asio::detached);
     }
 }
 
-asio::awaitable<void> Server::serverSocket(asio::ip::tcp::socket peer) {
+asio::awaitable<void> Server::serverSocket(TCPSocket peer) {
     auto executor = co_await asio::this_coro::executor;
 
     try {
@@ -33,11 +32,12 @@ asio::awaitable<void> Server::serverSocket(asio::ip::tcp::socket peer) {
         std::string host, port;
         co_await readTgtAddr(*ec, host, port);
 
-        asio::ip::tcp::resolver r{executor};
-        auto results = co_await r.async_resolve(host, port, asio::use_awaitable);
+        Resolver r{executor};
+        Resolver::results_type results = co_await r.async_resolve(host, port);
         asio::ip::tcp::endpoint endpoint = *results.begin();
-        asio::ip::tcp::socket socket{executor};
-        co_await socket.async_connect(endpoint, asio::use_awaitable);
+
+        TCPSocket socket{executor};
+        co_await socket.async_connect(endpoint);
         auto c = std::make_shared<Connection>(std::move(socket));
 
         asio::co_spawn(executor, ioCopy(c, ec), asio::detached);
@@ -49,6 +49,6 @@ asio::awaitable<void> Server::serverSocket(asio::ip::tcp::socket peer) {
             spdlog::debug(e.what());
         }
     } catch (const std::exception& e) {
-        spdlog::debug(e.what());
+        spdlog::warn(e.what());
     }
 }

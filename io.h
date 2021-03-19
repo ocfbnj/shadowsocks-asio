@@ -3,24 +3,23 @@
 
 #include <array>
 #include <concepts>
-#include <cstddef>
-#include <cstdint>
-#include <span>
 #include <system_error>
 
 #include <asio/awaitable.hpp>
 #include <spdlog/spdlog.h>
 
+#include "type.h"
+
 // clang-format off
 
 template <typename T>
-concept Reader = requires (T r, std::span<std::uint8_t> buf) {
-    { r.read(buf) } -> std::same_as<asio::awaitable<std::size_t>>;
+concept Reader = requires (T r, BytesView buf) {
+    { r.read(buf) } -> std::same_as<asio::awaitable<Size>>;
 };
 
 template <typename T>
-concept Writer = requires (T w, std::span<std::uint8_t> buf) {
-    { w.write(buf) } -> std::same_as<asio::awaitable<std::size_t>>;
+concept Writer = requires (T w, BytesView buf) {
+    { w.write(buf) } -> std::same_as<asio::awaitable<Size>>;
 };
 
 template <typename T>
@@ -33,12 +32,12 @@ concept ReadWriteCloser = Reader<T> && Writer<T> && Closer<T>;
 
 template <ReadWriteCloser W, ReadWriteCloser R>
 asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
-    std::array<std::uint8_t, 32768> buf;
+    std::array<u8, 32768> buf;
 
     try {
         while (true) {
-            std::size_t size = co_await r->read(buf);
-            co_await w->write(std::span{std::data(buf), size});
+            Size size = co_await r->read(buf);
+            co_await w->write(BytesView{buf.data(), size});
         }
     } catch (const std::system_error& e) {
         r->close();
@@ -52,14 +51,14 @@ asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
 
 // clang-format on
 
-// readFull reads exactly std::size(buf) bytes from r.
-asio::awaitable<std::size_t> readFull(Reader auto& r, std::span<std::uint8_t> buf) {
-    std::uint8_t* data = std::data(buf);
-    std::size_t nRead = 0;
-    std::size_t remaining = std::size(buf);
+// readFull reads exactly buf.size() bytes from r.
+asio::awaitable<Size> readFull(Reader auto& r, BytesView buf) {
+    u8* data = buf.data();
+    Size nRead = 0;
+    Size remaining = buf.size();
 
     while (remaining > 0) {
-        std::size_t n = co_await r.read(std::span{data + nRead, remaining});
+        Size n = co_await r.read(BytesView{data + nRead, remaining});
 
         nRead += n;
         remaining -= n;
