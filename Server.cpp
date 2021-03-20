@@ -10,17 +10,17 @@
 #include "socks5.h"
 
 Server::Server(std::string_view pwd) {
-    deriveKey(std::span{(u8*)(std::data(pwd)), std::size(pwd)}, key.size(), key);
+    deriveKey(BytesView{(u8*)(pwd.data()), pwd.size()}, key.size(), key);
 }
 
 asio::awaitable<void> Server::listen(const asio::ip::tcp::endpoint& endpoint) {
     auto executor = co_await asio::this_coro::executor;
 
-    asio::ip::tcp::acceptor acceptor{executor, endpoint};
+    Acceptor acceptor{executor, endpoint};
     spdlog::info("Listen on {}:{}", endpoint.address().to_string(), endpoint.port());
 
     while (true) {
-        TCPSocket peer = co_await acceptor.async_accept(asio::use_awaitable);
+        TCPSocket peer = co_await acceptor.async_accept();
         asio::co_spawn(asio::make_strand(executor), serverSocket(std::move(peer)), asio::detached);
     }
 }

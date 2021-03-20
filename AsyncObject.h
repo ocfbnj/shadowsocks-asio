@@ -7,6 +7,7 @@
 
 using DefaultToken = asio::use_awaitable_t<>;
 
+using Acceptor = DefaultToken::as_default_on_t<asio::ip::tcp::acceptor>;
 using TCPSocket = DefaultToken::as_default_on_t<asio::ip::tcp::socket>;
 using Resolver = DefaultToken::as_default_on_t<asio::ip::tcp::resolver>;
 
