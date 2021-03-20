@@ -46,7 +46,7 @@ asio::awaitable<void> readTgtAddr(Reader auto& r, std::string& host, std::string
         co_await readFull(r, BytesView{&len, 1});
 
         std::string domainName(len, 0);
-        co_await readFull(r, BytesView{reinterpret_cast<u8*>(std::data(domainName)), len});
+        co_await readFull(r, BytesView{reinterpret_cast<u8*>(domainName.data()), len});
         host = std::move(domainName);
     } break;
     case ATYP::IPv6: {
