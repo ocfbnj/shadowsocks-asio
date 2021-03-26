@@ -22,21 +22,21 @@ constexpr auto MaxAddrLen = 259;
 constexpr auto MaxMsgLen = 262;
 
 // SOCKS5 request command defined in RFC 1928 section 4.
-enum class CMD {
+enum class CMD : u8 {
     CONNECT = 0x01,
     BIND = 0x02,
     UDP_ASSOCIATE = 0x03
 };
 
 // SOCKS5 address type defined in RFC 1928 section 5.
-enum class Atyp {
+enum class Atyp : u8 {
     IPv4 = 0x01,
     DOMAINNAME = 0x03,
     IPv6 = 0x04
 };
 
 // SOCKS5 methods defined in RFC 1928 section 3.
-enum class Method {
+enum class Method : u8 {
     NoAuthentication = 0x00,
     GSSAPI = 0x01,
     UsernamePassword = 0x02,
@@ -44,7 +44,7 @@ enum class Method {
 };
 
 // SOCKS5 commands defined in RFC 1928 section 4.
-enum class Command {
+enum class Command : u8 {
     Connect = 0x01,
     Bind = 0x02,
     UDP = 0x03
@@ -68,17 +68,22 @@ private:
 };
 
 // Read a SOCK5 address from r.
-asio::awaitable<void> readTgtAddr(Reader auto& r, std::string& host, std::string& port) {
+asio::awaitable<std::string> readTgtAddr(Reader auto& r, std::string& host, std::string& port) {
+    std::string socks5Addr;
+
     u8 type;
     co_await readFull(r, BytesView{&type, 1});
 
     Atyp atyp = static_cast<Atyp>(type);
+    socks5Addr.push_back(static_cast<char>(atyp));
 
     switch (atyp) {
     case Atyp::IPv4: {
         asio::ip::address_v4::bytes_type addr;
         co_await readFull(r, addr);
         host = asio::ip::make_address_v4(addr).to_string();
+
+        socks5Addr.append(reinterpret_cast<const char*>(addr.data()), 4);
     } break;
     case Atyp::DOMAINNAME: {
         u8 len;
@@ -86,24 +91,33 @@ asio::awaitable<void> readTgtAddr(Reader auto& r, std::string& host, std::string
 
         std::string domainName(len, 0);
         co_await readFull(r, BytesView{reinterpret_cast<u8*>(domainName.data()), len});
-        host = std::move(domainName);
+        host = domainName;
+
+        socks5Addr.push_back(static_cast<char>(len));
+        socks5Addr.append(std::move(domainName));
     } break;
     case Atyp::IPv6: {
         asio::ip::address_v6::bytes_type addr;
         co_await readFull(r, addr);
         host = asio::ip::make_address_v6(addr).to_string();
+
+        socks5Addr.append(reinterpret_cast<const char*>(addr.data()), 16);
     } break;
     default:
-        co_return;
+        throw HandShakeError{HandShakeErrCode::Atyp};
     }
 
     u16 p;
     co_await readFull(r, BytesView{reinterpret_cast<u8*>(&p), 2});
+    socks5Addr.append(reinterpret_cast<const char*>(&p), 2);
+
     p = ::ntohs(p);
     port = std::to_string(p);
+
+    co_return socks5Addr;
 }
 
-asio::awaitable<void> handshake(ReadWriter auto& rw, std::string& host, std::string& port) {
+asio::awaitable<std::string> handshake(ReadWriter auto& rw, std::string& host, std::string& port) {
     std::array<u8, MaxMsgLen> buf;
 
     // stage 1
@@ -127,7 +141,7 @@ asio::awaitable<void> handshake(ReadWriter auto& rw, std::string& host, std::str
     }
 
     // ok
-    u8 rsp1[] = {Ver, Method::NoAuthentication};
+    u8 rsp1[] = {Ver, static_cast<u8>(Method::NoAuthentication)};
     co_await rw.write(BytesView{rsp1});
 
     // stage 2
@@ -141,11 +155,13 @@ asio::awaitable<void> handshake(ReadWriter auto& rw, std::string& host, std::str
         throw HandShakeError{HandShakeErrCode::Command};
     }
 
-    co_await readTgtAddr(rw, host, port);
+    std::string socks5Addr = co_await readTgtAddr(rw, host, port);
 
     // ok
-    u8 rsp2[] = {Ver, 0x00, 0x00, Atyp::IPv4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    u8 rsp2[] = {Ver, 0x00, 0x00, static_cast<u8>(Atyp::IPv4), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     co_await rw.write(BytesView{rsp2});
+
+    co_return socks5Addr;
 }
 
 #endif
