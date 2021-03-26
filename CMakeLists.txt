@@ -20,7 +20,6 @@ list(APPEND LIBS
 list(APPEND SRC
     Connection.cpp
     EncryptedConnection.cpp
-    Server.cpp
     socks5.cpp
     tcp.cpp
     main.cpp)
