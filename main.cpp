@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (port == 0 || std::empty(password)) {
+    if (port == 0 || password.empty()) {
         printUsage();
         return 0;
     }

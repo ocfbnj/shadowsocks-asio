@@ -26,7 +26,7 @@ public:
         ~DecryptionError() noexcept = default;
 
         const char* what() const noexcept override {
-            return std::data(msg);
+            return msg.data();
         }
 
     private:
