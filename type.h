@@ -1,5 +1,5 @@
 #ifndef TYPE_H
-#define TYPE_F
+#define TYPE_H
 
 #include <cstddef>
 #include <cstdint>
