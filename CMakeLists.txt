@@ -21,6 +21,7 @@ list(APPEND SRC
     Connection.cpp
     EncryptedConnection.cpp
     Server.cpp
+    socks5.cpp
     main.cpp)
 
 add_executable(${CMAKE_PROJECT_NAME} ${SRC})
