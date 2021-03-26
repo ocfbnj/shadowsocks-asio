@@ -63,3 +63,72 @@ asio::awaitable<void> tcpRemote(std::string_view remotePort, std::string_view pa
         asio::co_spawn(asio::make_strand(executor), serverSocket(std::move(peer)), asio::detached);
     }
 }
+
+asio::awaitable<void> tcpLocal(std::string_view remoteHost, std::string_view remotePort,
+                               std::string_view localPort,
+                               std::string_view password) {
+    auto executor = co_await asio::this_coro::executor;
+
+    // derive key from password
+    std::array<u8, ChaCha20Poly1305<>::KeySize> key;
+    deriveKey(BytesView{(u8*)(password.data()), password.size()}, key.size(), key);
+
+    // resolve ss-remote server endpoint
+    // TODO add timeout
+    Resolver resolver{executor};
+    Resolver::results_type results = co_await resolver.async_resolve(remoteHost.data(), remotePort.data());
+    const asio::ip::tcp::endpoint& remoteEndpoint = *results.begin();
+
+    spdlog::debug("Remote server: {}:{}", remoteEndpoint.address().to_string(), remoteEndpoint.port());
+
+    // listen
+    asio::ip::tcp::endpoint localEndpoint{asio::ip::tcp::v4(),
+                                          static_cast<u16>(std::stoul(localPort.data()))};
+    Acceptor acceptor{executor, localEndpoint};
+
+    spdlog::info("Listen on {}:{}", localEndpoint.address().to_string(), localEndpoint.port());
+
+    auto serverSocket = [&key, &remoteEndpoint](TCPSocket peer) -> asio::awaitable<void> {
+        auto executor = co_await asio::this_coro::executor;
+
+        try {
+            auto c = std::make_shared<Connection>(std::move(peer));
+
+            // socks5 handshake
+            std::string host, port;
+            std::string socks5Addr = co_await handshake(*c, host, port);
+
+            // resolve target endpoint
+            Resolver r{executor};
+            Resolver::results_type results = co_await r.async_resolve(host, port);
+            const asio::ip::tcp::endpoint& targetEndpoint = *results.begin();
+
+            spdlog::debug("Target address: {}:{}", targetEndpoint.address().to_string(), targetEndpoint.port());
+
+            // connect to ss-remote server
+            TCPSocket remoteSocket{executor};
+            co_await remoteSocket.async_connect(remoteEndpoint);
+            auto eC = std::make_shared<EncryptedConnection>(std::move(remoteSocket), key);
+
+            // write target address
+            co_await eC->write(BytesView{reinterpret_cast<Byte*>(socks5Addr.data()), socks5Addr.size()});
+
+            // proxy
+            asio::co_spawn(executor, ioCopy(c, eC), asio::detached);
+            asio::co_spawn(executor, ioCopy(eC, c), asio::detached);
+        } catch (const HandShakeError& e) {
+            spdlog::warn(e.what());
+        } catch (const std::system_error& e) {
+            if (e.code() != asio::error::eof && e.code() != asio::error::operation_aborted) {
+                spdlog::debug(e.what());
+            }
+        } catch (const std::exception& e) {
+            spdlog::warn(e.what());
+        }
+    };
+
+    while (true) {
+        TCPSocket peer = co_await acceptor.async_accept();
+        asio::co_spawn(asio::make_strand(executor), serverSocket(std::move(peer)), asio::detached);
+    }
+}
