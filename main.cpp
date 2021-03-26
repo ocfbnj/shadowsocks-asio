@@ -14,16 +14,24 @@
 #include "tcp.h"
 #include "type.h"
 
-void printUsage() {
-    std::cerr << "Usage: \n"
-                 "    -p <server_port>           Port number of your remote server.\n"
-                 "    -k <password>              Password of your remote server.\n\n"
-                 "    -V                         Verbose mode.\n";
-}
-
-static std::string_view port;
+static std::string_view remoteHost;
+static std::string_view remotePort;
+static std::string_view localPort;
 static std::string_view password;
 static bool remoteMode = true;
+
+void printUsage() {
+    std::cout << "Usage: \n"
+                 "    --Server                   Server mode.(Default)\n"
+                 "    --Client                   Client mode. \n"
+                 "\n"
+                 "    -s <server host>           Host name or IP address of your remote server.\n"
+                 "    -p <server port>           Port number of your remote server.\n"
+                 "    -l <local port>            Port number of your local server.\n"
+                 "    -k <password>              Password of your remote server.\n"
+                 "\n"
+                 "    -V                         Verbose mode.\n";
+}
 
 int main(int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) {
@@ -32,45 +40,48 @@ int main(int argc, char* argv[]) {
         if (!strcmp("--help", argv[i]) || !strcmp("-h", argv[i])) {
             printUsage();
             return 0;
-        }
-
-        if (!strcmp("-V", argv[i])) {
+        } else if (!strcmp("--Client", argv[i])) {
+            remoteMode = false;
+        } else if (!strcmp("-V", argv[i])) {
             spdlog::set_level(spdlog::level::debug);
-        }
-
-        if (!strcmp("-p", argv[i])) {
-            port = argv[++i];
+        } else if (!strcmp("-s", argv[i])) {
+            remoteHost = argv[++i];
+        } else if (!strcmp("-p", argv[i])) {
+            remotePort = argv[++i];
+        } else if (!strcmp("-l", argv[i])) {
+            localPort = argv[++i];
         } else if (!strcmp("-k", argv[i])) {
             password = argv[++i];
         }
     }
 
-    if (port.empty() || password.empty()) {
-        printUsage();
-        return 0;
-    }
-
     asio::io_context ctx;
+
+    if (remoteMode) {
+        if (remotePort.empty() || password.empty()) {
+            printUsage();
+            return 0;
+        }
+
+        asio::co_spawn(ctx, tcpRemote(remotePort, password), asio::detached);
+    } else {
+        if (remoteHost.empty() || remotePort.empty() || localPort.empty() || password.empty()) {
+            printUsage();
+            return 0;
+        }
+
+        asio::co_spawn(ctx, tcpLocal(remoteHost, remotePort, localPort, password), asio::detached);
+    }
 
     asio::signal_set signals(ctx, SIGINT, SIGTERM);
     signals.async_wait([&ctx](auto, auto) { ctx.stop(); });
 
-    std::vector<std::thread> threadPool(std::thread::hardware_concurrency());
-    for (std::thread& t : threadPool) {
-        t = std::thread{[&ctx]() { ctx.run(); }};
-    }
-
-    if (remoteMode) {
-        asio::co_spawn(ctx, tcpRemote(port, password), asio::detached);
+    std::vector<std::jthread> threadPool(std::thread::hardware_concurrency());
+    for (std::jthread& t : threadPool) {
+        t = std::jthread{[&ctx]() { ctx.run(); }};
     }
 
     ctx.run();
-
-    for (std::thread& t : threadPool) {
-        if (t.joinable()) {
-            t.join();
-        }
-    }
 
     return 0;
 }
