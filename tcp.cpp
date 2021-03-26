@@ -22,8 +22,8 @@ asio::awaitable<void> tcpRemote(std::string_view remotePort, std::string_view pa
     auto executor = co_await asio::this_coro::executor;
 
     // derive key from password
-    std::array<u8, ChaCha20Poly1305<>::KeySize> key;
-    deriveKey(BytesView{(u8*)(password.data()), password.size()}, key.size(), key);
+    std::array<Byte, ChaCha20Poly1305<>::KeySize> key;
+    deriveKey(BytesView{(Byte*)(password.data()), password.size()}, key.size(), key);
 
     // listen
     asio::ip::tcp::endpoint endpoint{asio::ip::tcp::v4(), static_cast<u16>(std::stoul(remotePort.data()))};
@@ -68,7 +68,7 @@ asio::awaitable<void> tcpRemote(std::string_view remotePort, std::string_view pa
     };
 
     while (true) {
-        asio::ip::tcp::socket peer = co_await acceptor.async_accept();
+        TCPSocket peer = co_await acceptor.async_accept();
         asio::co_spawn(asio::make_strand(executor), serverSocket(std::move(peer)), asio::detached);
     }
 }
@@ -79,8 +79,8 @@ asio::awaitable<void> tcpLocal(std::string_view remoteHost, std::string_view rem
     auto executor = co_await asio::this_coro::executor;
 
     // derive key from password
-    std::array<u8, ChaCha20Poly1305<>::KeySize> key;
-    deriveKey(BytesView{(u8*)(password.data()), password.size()}, key.size(), key);
+    std::array<Byte, ChaCha20Poly1305<>::KeySize> key;
+    deriveKey(BytesView{(Byte*)(password.data()), password.size()}, key.size(), key);
 
     // resolve ss-remote server endpoint
     // TODO add timeout
@@ -91,8 +91,7 @@ asio::awaitable<void> tcpLocal(std::string_view remoteHost, std::string_view rem
     spdlog::debug("Remote server: {}:{}", remoteEndpoint.address().to_string(), remoteEndpoint.port());
 
     // listen
-    asio::ip::tcp::endpoint localEndpoint{asio::ip::tcp::v4(),
-                                          static_cast<u16>(std::stoul(localPort.data()))};
+    asio::ip::tcp::endpoint localEndpoint{asio::ip::tcp::v4(), static_cast<u16>(std::stoul(localPort.data()))};
     Acceptor acceptor{executor, localEndpoint};
 
     spdlog::info("Listen on {}:{}", localEndpoint.address().to_string(), localEndpoint.port());
