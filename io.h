@@ -33,6 +33,8 @@ concept ReadWriter = Reader<T> && Writer<T>;
 template <typename T>
 concept ReadWriteCloser = Reader<T> && Writer<T> && Closer<T>;
 
+// clang-format on
+
 template <ReadWriteCloser W, ReadWriteCloser R>
 asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
     std::array<u8, 32768> buf;
@@ -51,8 +53,6 @@ asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
         }
     }
 }
-
-// clang-format on
 
 // readFull reads exactly buf.size() bytes from r.
 asio::awaitable<Size> readFull(Reader auto& r, BytesView buf) {
