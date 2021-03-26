@@ -29,7 +29,7 @@ asio::awaitable<void> tcpRemote(std::string_view remotePort, std::string_view pa
     auto serverSocket = [&key](TCPSocket peer) -> asio::awaitable<void> {
         auto executor = co_await asio::this_coro::executor;
 
-        auto endpoint = peer.remote_endpoint();
+        asio::ip::tcp::endpoint endpoint = peer.remote_endpoint();
         std::string peerAddr = fmt::format("{}:{}", endpoint.address().to_string(), endpoint.port());
 
         try {
