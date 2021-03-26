@@ -28,6 +28,9 @@ concept Closer = requires (T c) {
 };
 
 template <typename T>
+concept ReadWriter = Reader<T> && Writer<T>;
+
+template <typename T>
 concept ReadWriteCloser = Reader<T> && Writer<T> && Closer<T>;
 
 template <ReadWriteCloser W, ReadWriteCloser R>
