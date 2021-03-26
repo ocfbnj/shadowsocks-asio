@@ -1,3 +1,6 @@
+// This file implements ss-local and ss-remote
+// See http://shadowsocks.org/en/wiki/Protocol.html
+
 #include <array>
 #include <string>
 
@@ -18,9 +21,11 @@
 asio::awaitable<void> tcpRemote(std::string_view remotePort, std::string_view password) {
     auto executor = co_await asio::this_coro::executor;
 
+    // derive key from password
     std::array<u8, ChaCha20Poly1305<>::KeySize> key;
     deriveKey(BytesView{(u8*)(password.data()), password.size()}, key.size(), key);
 
+    // listen
     asio::ip::tcp::endpoint endpoint{asio::ip::tcp::v4(), static_cast<u16>(std::stoul(remotePort.data()))};
     Acceptor acceptor{executor, endpoint};
 
@@ -33,18 +38,22 @@ asio::awaitable<void> tcpRemote(std::string_view remotePort, std::string_view pa
         std::string peerAddr = fmt::format("{}:{}", endpoint.address().to_string(), endpoint.port());
 
         try {
+            // establish an encrypted connection between ss-local and ss-remote
             auto ec = std::make_shared<EncryptedConnection>(std::move(peer), key);
+
+            // get target endpoint
             std::string host, port;
             co_await readTgtAddr(*ec, host, port);
-
             Resolver r{executor};
             Resolver::results_type results = co_await r.async_resolve(host, port);
             const asio::ip::tcp::endpoint& endpoint = *results.begin();
 
+            // connect to target host
             TCPSocket socket{executor};
             co_await socket.async_connect(endpoint);
             auto c = std::make_shared<Connection>(std::move(socket));
 
+            // proxy
             asio::co_spawn(executor, ioCopy(c, ec), asio::detached);
             asio::co_spawn(executor, ioCopy(ec, c), asio::detached);
         } catch (const AEAD::DecryptionError& e) {
@@ -92,6 +101,7 @@ asio::awaitable<void> tcpLocal(std::string_view remoteHost, std::string_view rem
         auto executor = co_await asio::this_coro::executor;
 
         try {
+            // connection between ss-local and client
             auto c = std::make_shared<Connection>(std::move(peer));
 
             // socks5 handshake
@@ -108,6 +118,8 @@ asio::awaitable<void> tcpLocal(std::string_view remoteHost, std::string_view rem
             // connect to ss-remote server
             TCPSocket remoteSocket{executor};
             co_await remoteSocket.async_connect(remoteEndpoint);
+
+            // establish an encrypted connection between ss-local and ss-remote
             auto eC = std::make_shared<EncryptedConnection>(std::move(remoteSocket), key);
 
             // write target address
