@@ -11,7 +11,7 @@
 #include <asio/ts/io_context.hpp>
 #include <spdlog/spdlog.h>
 
-#include "Server.h"
+#include "tcp.h"
 #include "type.h"
 
 void printUsage() {
@@ -21,8 +21,9 @@ void printUsage() {
                  "    -V                         Verbose mode.\n";
 }
 
-static u16 port;
+static std::string_view port;
 static std::string_view password;
+static bool remoteMode = true;
 
 int main(int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) {
@@ -38,13 +39,13 @@ int main(int argc, char* argv[]) {
         }
 
         if (!strcmp("-p", argv[i])) {
-            port = static_cast<u16>(std::stoul(argv[++i]));
+            port = argv[++i];
         } else if (!strcmp("-k", argv[i])) {
             password = argv[++i];
         }
     }
 
-    if (port == 0 || password.empty()) {
+    if (port.empty() || password.empty()) {
         printUsage();
         return 0;
     }
@@ -59,8 +60,9 @@ int main(int argc, char* argv[]) {
         t = std::thread{[&ctx]() { ctx.run(); }};
     }
 
-    Server server{password};
-    asio::co_spawn(ctx, server.listen({asio::ip::tcp::v4(), port}), asio::detached);
+    if (remoteMode) {
+        asio::co_spawn(ctx, tcpRemote(port, password), asio::detached);
+    }
 
     ctx.run();
 
