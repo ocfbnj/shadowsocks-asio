@@ -23,7 +23,7 @@ asio::awaitable<void> tcpRemote(std::string_view remotePort, std::string_view pa
 
     // derive key from password
     std::array<Byte, ChaCha20Poly1305<>::KeySize> key;
-    deriveKey(BytesView{(Byte*)(password.data()), password.size()}, key.size(), key);
+    deriveKey(ConstBytesView{reinterpret_cast<const Byte*>(password.data()), password.size()}, key);
 
     // listen
     asio::ip::tcp::endpoint endpoint{asio::ip::tcp::v4(), static_cast<u16>(std::stoul(remotePort.data()))};
@@ -80,7 +80,7 @@ asio::awaitable<void> tcpLocal(std::string_view remoteHost, std::string_view rem
 
     // derive key from password
     std::array<Byte, ChaCha20Poly1305<>::KeySize> key;
-    deriveKey(BytesView{(Byte*)(password.data()), password.size()}, key.size(), key);
+    deriveKey(ConstBytesView{reinterpret_cast<const Byte*>(password.data()), password.size()}, key);
 
     // resolve ss-remote server endpoint
     // TODO add timeout

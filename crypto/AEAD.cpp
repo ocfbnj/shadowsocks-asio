@@ -17,12 +17,13 @@ void increment(BytesView num) {
     }
 }
 
-void deriveKey(BytesView password, Size keySize, BytesView key) {
+void deriveKey(ConstBytesView password, BytesView key) {
     CryptoPP::Weak1::MD5 md5;
 
-    std::vector<u8> buf(keySize);
-    u8* pBuf = buf.data();
-    u8* pPassword = password.data();
+    Size keySize = key.size();
+    std::vector<Byte> buf(keySize);
+    Byte* pBuf = buf.data();
+    const Byte* pPassword = password.data();
 
     Size passwordSize = password.size();
     Size md5DigestSize = md5.DigestSize();
@@ -41,5 +42,5 @@ void deriveKey(BytesView password, Size keySize, BytesView key) {
         }
     }
 
-    std::memcpy(std::data(key), pBuf, keySize);
+    std::memcpy(key.data(), pBuf, keySize);
 }

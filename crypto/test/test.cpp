@@ -46,7 +46,7 @@ GTEST_TEST(ChaCha20Poly1305, deriveKey) {
         82, 156, 168, 5, 10, 0, 24, 7, 144, 207, 136, 182, 52, 104, 130, 106,
         109, 81, 225, 207, 24, 87, 148, 16, 101, 57, 172, 239, 219, 100, 183, 95};
 
-    deriveKey(password, ChaCha20Poly1305<>::KeySize, key);
+    deriveKey(password, key);
     EXPECT_EQ(key, expectKey);
 }
 
