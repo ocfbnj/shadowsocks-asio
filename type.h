@@ -20,5 +20,6 @@ using Size = std::size_t;
 using Byte = u8;
 
 using BytesView = std::span<Byte>;
+using ConstBytesView = std::span<const Byte>;
 
 #endif
