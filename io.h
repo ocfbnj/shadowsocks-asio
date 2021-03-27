@@ -37,7 +37,7 @@ concept ReadWriteCloser = Reader<T> && Writer<T> && Closer<T>;
 
 template <ReadWriteCloser W, ReadWriteCloser R>
 asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
-    std::array<u8, 32768> buf;
+    std::array<Byte, 32768> buf;
 
     try {
         while (true) {
@@ -56,7 +56,7 @@ asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
 
 // readFull reads exactly buf.size() bytes from r.
 asio::awaitable<Size> readFull(Reader auto& r, BytesView buf) {
-    u8* data = buf.data();
+    Byte* data = buf.data();
     Size nRead = 0;
     Size remaining = buf.size();
 
