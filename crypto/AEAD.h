@@ -7,7 +7,7 @@
 #include "type.h"
 
 void increment(BytesView num);
-void deriveKey(BytesView password, Size keySize, BytesView key);
+void deriveKey(ConstBytesView password, BytesView key);
 
 class AEAD {
 public:
