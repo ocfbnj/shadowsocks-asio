@@ -1,17 +1,18 @@
 #!/bin/bash
 
 name="shadowsocks-asio"
-version="v0.0.3"
+version="v0.0.4-alpha"
 
-start_file="/etc/${name}/start.sh"
 bin_file="/usr/local/bin/${name}"
-service_file="/etc/systemd/system/${name}.service"
+ss_remote_start_file="/etc/${name}/ss-remote.sh"
+ss_remote_service_name="ss-remote.service"
+ss_remote_service_file="/etc/systemd/system/${ss_remote_service_name}"
 
 # 1. Stop service.
-systemctl disable --now ${name}.service
+systemctl disable --now ${ss_remote_service_name}
 
 # 2. Remove all files except log files.
-rm ${start_file} ${log_file} ${bin_file} ${service_file}
+rm ${bin_file} ${ss_remote_start_file} ${ss_remote_service_file}
 
-# 3. reload the configuration file.
+# 3. Reload the configuration file.
 systemctl daemon-reload
