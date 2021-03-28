@@ -32,20 +32,18 @@ This project is for learning purposes.
 
 4. Install dependencies
     ~~~bash
-    $ ./vcpkg install asio[coroutine] cryptopp fmt spdlog
+    $ ./vcpkg install asio[coroutine] cryptopp fmt spdlog gtest
     ~~~
 
 5. Clone and build
     ~~~bash
     $ git clone https://github.com/ocfbnj/shadowsocks-asio
     $ cd shadowsocks-asio
-    $ mkdir build
-    $ cd build
-    $ cmake \
+    $ mkdir build && cd build
+    $ cmake .. \
         -G Ninja \
         -DCMAKE_CXX_COMPILER:FILEPATH=/bin/g++-10 \
-        -DCMAKE_TOOLCHAIN_FILE=[path to vcpkg]/scripts/buildsystems/vcpkg.cmake \
-        ..
+        -DCMAKE_TOOLCHAIN_FILE=[path to vcpkg]/scripts/buildsystems/vcpkg.cmake
     $ cmake --build .
     ~~~
     Where the [path to vcpkg] is your vcpkg root directory.
