@@ -18,12 +18,13 @@ static std::string_view remoteHost;
 static std::string_view remotePort;
 static std::string_view localPort;
 static std::string_view password;
+
 static bool remoteMode = true;
 
 void printUsage() {
     std::cout << "Usage: \n"
-                 "    --Server                   Server mode.(Default)\n"
-                 "    --Client                   Client mode. \n"
+                 "    --Server                   Server mode. (Default)\n"
+                 "    --Client                   Client mode.\n"
                  "\n"
                  "    -s <server host>           Host name or IP address of your remote server.\n"
                  "    -p <server port>           Port number of your remote server.\n"
