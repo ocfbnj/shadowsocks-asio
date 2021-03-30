@@ -1,14 +1,9 @@
 #ifndef CHACHA20POLY1305_H
 #define CHACHA20POLY1305_H
 
-#include <algorithm>
-#include <array>
-#include <cassert>
-
 #include <cryptopp/chachapoly.h>
 
 #include "AEAD.h"
-#include "type.h"
 
 template <bool IsEncryption>
 class ChaCha20Poly1305Base;

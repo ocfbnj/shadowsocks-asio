@@ -5,7 +5,6 @@
 #include <cryptopp/gcm.h>
 
 #include "AEAD.h"
-#include "type.h"
 
 template <bool IsEncryption>
 class AES256GCMBase;
