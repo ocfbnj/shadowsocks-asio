@@ -5,6 +5,7 @@
 
 #include "ChaCha20Poly1305.h"
 #include "EncryptedConnection.h"
+#include "GCM.h"
 
 EncryptedConnection::EncryptedConnection(TCPSocket s, BytesView key)
     : conn(std::move(s)),

@@ -14,6 +14,12 @@ void hkdfSha1(BytesView key, BytesView salt, BytesView subkey);
 template <bool IsEncryption>
 class ChaCha20Poly1305Base;
 
+template <bool IsEncryption>
+class AES256GCMBase;
+
+template <bool IsEncryption>
+class AES128GCMBase;
+
 // AEAD class is the interface for AEAD Cipher.
 class AEAD {
 public:
@@ -51,9 +57,9 @@ public:
         case Cipher::ChaCha20Poly1305:
             return std::make_unique<ChaCha20Poly1305Base<IsEncryption>>(key);
         case Cipher::AES256GCM:
-            break;
+            return std::make_unique<AES256GCMBase<IsEncryption>>(key);
         case Cipher::AES128GCM:
-            break;
+            return std::make_unique<AES128GCMBase<IsEncryption>>(key);
         default:
             break;
         }
