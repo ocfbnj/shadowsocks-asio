@@ -8,8 +8,8 @@
 
 EncryptedConnection::EncryptedConnection(TCPSocket s, BytesView key)
     : conn(std::move(s)),
-      enC(std::make_unique<ChaCha20Poly1305<true>>(key)),
-      deC(std::make_unique<ChaCha20Poly1305<false>>(key)) {}
+      enC(AEAD::create<true>(AEAD::ChaCha20Poly1305, key)),
+      deC(AEAD::create<false>(AEAD::ChaCha20Poly1305, key)) {}
 
 asio::awaitable<Size> EncryptedConnection::read(BytesView buffer) {
     co_await readSalt(conn, deC);

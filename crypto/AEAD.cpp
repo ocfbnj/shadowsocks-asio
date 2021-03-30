@@ -2,7 +2,9 @@
 #include <vector>
 
 #define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
+#include <cryptopp/hkdf.h>
 #include <cryptopp/md5.h>
+#include <cryptopp/sha.h>
 
 #include "AEAD.h"
 
@@ -43,4 +45,12 @@ void deriveKey(ConstBytesView password, BytesView key) {
     }
 
     std::memcpy(key.data(), pBuf, keySize);
+}
+
+void hkdfSha1(BytesView key, BytesView salt, BytesView subkey) {
+    CryptoPP::HKDF<CryptoPP::SHA1> hkdf;
+    hkdf.DeriveKey(subkey.data(), subkey.size(),
+                   key.data(), key.size(),
+                   salt.data(), salt.size(),
+                   reinterpret_cast<const u8*>(AEAD::Info.data()), AEAD::Info.size());
 }

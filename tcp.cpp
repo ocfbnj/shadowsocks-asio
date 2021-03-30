@@ -22,7 +22,7 @@ asio::awaitable<void> tcpRemote(std::string_view remotePort, std::string_view pa
     auto executor = co_await asio::this_coro::executor;
 
     // derive key from password
-    std::array<Byte, ChaCha20Poly1305<>::KeySize> key;
+    std::array<Byte, ChaCha20Poly1305::KeySize> key;
     deriveKey(ConstBytesView{reinterpret_cast<const Byte*>(password.data()), password.size()}, key);
 
     // listen
@@ -79,7 +79,7 @@ asio::awaitable<void> tcpLocal(std::string_view remoteHost, std::string_view rem
     auto executor = co_await asio::this_coro::executor;
 
     // derive key from password
-    std::array<Byte, ChaCha20Poly1305<>::KeySize> key;
+    std::array<Byte, ChaCha20Poly1305::KeySize> key;
     deriveKey(ConstBytesView{reinterpret_cast<const Byte*>(password.data()), password.size()}, key);
 
     // resolve ss-remote server endpoint
