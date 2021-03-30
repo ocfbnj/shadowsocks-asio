@@ -4,12 +4,9 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "type.h"
-
-void increment(BytesView num);
-void deriveKey(ConstBytesView password, BytesView key);
-void hkdfSha1(BytesView key, BytesView salt, BytesView subkey);
 
 template <bool IsEncryption>
 class ChaCha20Poly1305Base;
@@ -20,9 +17,19 @@ class AES256GCMBase;
 template <bool IsEncryption>
 class AES128GCMBase;
 
+class AEAD;
+
+using AEADPtr = std::unique_ptr<AEAD>;
+
+void increment(BytesView num);
+void deriveKey(ConstBytesView password, BytesView key);
+void hkdfSha1(BytesView key, BytesView salt, BytesView subkey);
+
 // AEAD class is the interface for AEAD Cipher.
 class AEAD {
 public:
+    using Ciphers = std::pair<AEADPtr, AEADPtr>;
+
     static constexpr auto MaximumPayloadSize = 0x3FFF;
 
     static constexpr auto MaximumKeySize = 32;
@@ -66,6 +73,9 @@ public:
 
         return {};
     }
+
+    static Ciphers makeCiphers(Cipher type, ConstBytesView password);
+    static Ciphers makeCiphers(Cipher type, std::string_view password);
 
     virtual ~AEAD() = default;
 
