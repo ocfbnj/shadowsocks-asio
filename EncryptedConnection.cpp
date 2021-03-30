@@ -7,10 +7,11 @@
 #include "EncryptedConnection.h"
 #include "GCM.h"
 
-EncryptedConnection::EncryptedConnection(TCPSocket s, BytesView key)
-    : conn(std::move(s)),
-      enC(AEAD::create<true>(AEAD::ChaCha20Poly1305, key)),
-      deC(AEAD::create<false>(AEAD::ChaCha20Poly1305, key)) {}
+EncryptedConnection::EncryptedConnection(TCPSocket s, AEAD::Ciphers ciphers)
+    : EncryptedConnection(std::move(s), std::move(ciphers.first), std::move(ciphers.second)) {}
+
+EncryptedConnection::EncryptedConnection(TCPSocket s, AEADPtr eC, AEADPtr dC)
+    : conn(std::move(s)), enC(std::move(eC)), deC(std::move(dC)) {}
 
 asio::awaitable<Size> EncryptedConnection::read(BytesView buffer) {
     co_await readSalt(conn, deC);

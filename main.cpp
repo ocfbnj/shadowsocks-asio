@@ -11,15 +11,18 @@
 #include <asio/ts/io_context.hpp>
 #include <spdlog/spdlog.h>
 
+#include "AEAD.h"
 #include "tcp.h"
 #include "type.h"
+
+static bool remoteMode = true;
 
 static std::string_view remoteHost;
 static std::string_view remotePort;
 static std::string_view localPort;
 static std::string_view password;
 
-static bool remoteMode = true;
+static AEAD::Cipher cipherType = AEAD::ChaCha20Poly1305;
 
 void printUsage() {
     std::cout << "Usage: \n"
@@ -64,14 +67,14 @@ int main(int argc, char* argv[]) {
             return 0;
         }
 
-        asio::co_spawn(ctx, tcpRemote(remotePort, password), asio::detached);
+        asio::co_spawn(ctx, tcpRemote(cipherType, remotePort, password), asio::detached);
     } else {
         if (remoteHost.empty() || remotePort.empty() || localPort.empty() || password.empty()) {
             printUsage();
             return 0;
         }
 
-        asio::co_spawn(ctx, tcpLocal(remoteHost, remotePort, localPort, password), asio::detached);
+        asio::co_spawn(ctx, tcpLocal(cipherType, remoteHost, remotePort, localPort, password), asio::detached);
     }
 
     asio::signal_set signals(ctx, SIGINT, SIGTERM);

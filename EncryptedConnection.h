@@ -17,7 +17,8 @@
 // and encrypts the data before sending it.
 class EncryptedConnection {
 public:
-    EncryptedConnection(TCPSocket s, BytesView key);
+    EncryptedConnection(TCPSocket s, AEAD::Ciphers ciphers);
+    EncryptedConnection(TCPSocket s, AEADPtr eC, AEADPtr dC);
 
     asio::awaitable<Size> read(BytesView buffer);
     asio::awaitable<Size> write(BytesView buffer);
@@ -29,8 +30,8 @@ private:
     // Connection is not inherited because we want to use its methods directly.
     Connection conn;
 
-    std::unique_ptr<AEAD> enC;
-    std::unique_ptr<AEAD> deC;
+    AEADPtr enC;
+    AEADPtr deC;
 
     // When the buffer for calling the read function is too small, temporarily put it in buf.
     std::array<u8, MaximumMessageSize> buf;
@@ -38,7 +39,7 @@ private:
     Size remaining = 0;
 };
 
-asio::awaitable<void> readSalt(Reader auto& r, const std::unique_ptr<AEAD>& deC) {
+asio::awaitable<void> readSalt(Reader auto& r, const AEADPtr& deC) {
     if (deC->salt()) {
         co_return;
     }
@@ -48,7 +49,7 @@ asio::awaitable<void> readSalt(Reader auto& r, const std::unique_ptr<AEAD>& deC)
     deC->setSalt(salt);
 }
 
-asio::awaitable<Size> readEncryptedPayload(Reader auto& r, const std::unique_ptr<AEAD>& deC,
+asio::awaitable<Size> readEncryptedPayload(Reader auto& r, const AEADPtr& deC,
                                            BytesView out) {
     Size tagSize = deC->tagSize();
     std::vector<u8> buf(AEAD::MaximumPayloadSize + tagSize);
@@ -67,7 +68,7 @@ asio::awaitable<Size> readEncryptedPayload(Reader auto& r, const std::unique_ptr
     co_return payloadLen;
 }
 
-asio::awaitable<void> writeSalt(Writer auto& w, const std::unique_ptr<AEAD>& enC) {
+asio::awaitable<void> writeSalt(Writer auto& w, const AEADPtr& enC) {
     if (enC->salt()) {
         co_return;
     }
@@ -81,7 +82,7 @@ asio::awaitable<void> writeSalt(Writer auto& w, const std::unique_ptr<AEAD>& enC
     co_await w.write(salt);
 }
 
-asio::awaitable<Size> writeUnencryptedPayload(Writer auto& w, const std::unique_ptr<AEAD>& enC,
+asio::awaitable<Size> writeUnencryptedPayload(Writer auto& w, const AEADPtr& enC,
                                               BytesView in) {
     Size remaining = in.size();
     Size nWrite = 0;
