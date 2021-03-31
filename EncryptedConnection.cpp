@@ -3,9 +3,7 @@
 #include <asio/ts/buffer.hpp>
 #include <spdlog/spdlog.h>
 
-#include "ChaCha20Poly1305.h"
 #include "EncryptedConnection.h"
-#include "GCM.h"
 
 EncryptedConnection::EncryptedConnection(TCPSocket s, AEAD::Ciphers ciphers)
     : EncryptedConnection(std::move(s), std::move(ciphers.first), std::move(ciphers.second)) {}

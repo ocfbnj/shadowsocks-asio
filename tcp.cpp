@@ -11,7 +11,6 @@
 #include <spdlog/spdlog.h>
 
 #include "AsyncObject.h"
-#include "ChaCha20Poly1305.h"
 #include "EncryptedConnection.h"
 #include "io.h"
 #include "socks5.h"
