@@ -24,7 +24,7 @@ static std::string_view password;
 
 static AEAD::Cipher cipherType = AEAD::ChaCha20Poly1305;
 
-void printUsage() {
+static void printUsage() {
     std::cout << "Usage: \n"
                  "    --Server                   Server mode. (Default)\n"
                  "    --Client                   Client mode.\n"
@@ -34,7 +34,27 @@ void printUsage() {
                  "    -l <local port>            Port number of your local server.\n"
                  "    -k <password>              Password of your remote server.\n"
                  "\n"
+                 "    -m <encrypt method>        Encrypt method:\n"
+                 "                               aes-128-gcm, aes-256-gcm,\n"
+                 "                               chacha20-ietf-poly1305 (Default).\n"
+                 "\n"
                  "    -V                         Verbose mode.\n";
+}
+
+static AEAD::Cipher pickCipher(std::string_view method) {
+    if (method == "chacha20-ietf-poly1305") {
+        return AEAD::ChaCha20Poly1305;
+    }
+
+    if (method == "aes-128-gcm") {
+        return AEAD::AES128GCM;
+    }
+
+    if (method == "aes-256-gcm") {
+        return AEAD::AES256GCM;
+    }
+
+    return AEAD::Invalid;
 }
 
 int main(int argc, char* argv[]) {
@@ -46,8 +66,6 @@ int main(int argc, char* argv[]) {
             return 0;
         } else if (!strcmp("--Client", argv[i])) {
             remoteMode = false;
-        } else if (!strcmp("-V", argv[i])) {
-            spdlog::set_level(spdlog::level::debug);
         } else if (!strcmp("-s", argv[i])) {
             remoteHost = argv[++i];
         } else if (!strcmp("-p", argv[i])) {
@@ -56,7 +74,17 @@ int main(int argc, char* argv[]) {
             localPort = argv[++i];
         } else if (!strcmp("-k", argv[i])) {
             password = argv[++i];
+        } else if (!strcmp("-m", argv[i])) {
+            cipherType = pickCipher(argv[++i]);
+        } else if (!strcmp("-V", argv[i])) {
+            spdlog::set_level(spdlog::level::debug);
         }
+    }
+
+    if (cipherType == AEAD::Invalid) {
+        std::cout << "Invalid encrypt method.\n\n";
+        printUsage();
+        return 0;
     }
 
     asio::io_context ctx;
