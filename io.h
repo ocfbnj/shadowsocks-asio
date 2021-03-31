@@ -35,9 +35,11 @@ concept ReadWriteCloser = Reader<T> && Writer<T> && Closer<T>;
 
 // clang-format on
 
+constexpr auto BufferSize = 32768;
+
 template <ReadWriteCloser W, ReadWriteCloser R>
 asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
-    std::array<Byte, 32768> buf;
+    std::array<Byte, BufferSize> buf;
 
     try {
         while (true) {

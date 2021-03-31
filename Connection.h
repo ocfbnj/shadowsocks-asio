@@ -2,8 +2,6 @@
 #define CONNECTION_H
 
 #include <asio/awaitable.hpp>
-#include <asio/ts/internet.hpp>
-#include <asio/ts/socket.hpp>
 
 #include "AsyncObject.h"
 #include "type.h"

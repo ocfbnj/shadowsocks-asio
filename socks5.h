@@ -6,7 +6,6 @@
 #include <utility>
 
 #include <asio/awaitable.hpp>
-#include <asio/ts/buffer.hpp>
 #include <asio/ts/internet.hpp>
 
 #include "io.h"

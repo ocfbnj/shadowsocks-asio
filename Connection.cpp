@@ -2,7 +2,6 @@
 #include <utility>
 
 #include <asio/ts/buffer.hpp>
-#include <spdlog/spdlog.h>
 
 #include "Connection.h"
 

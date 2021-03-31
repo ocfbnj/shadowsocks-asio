@@ -22,7 +22,7 @@ static std::string_view remotePort;
 static std::string_view localPort;
 static std::string_view password;
 
-static AEAD::Method cipherType = AEAD::ChaCha20Poly1305;
+static AEAD::Method method = AEAD::ChaCha20Poly1305;
 
 static void printUsage() {
     std::cout << "Usage: \n"
@@ -75,13 +75,13 @@ int main(int argc, char* argv[]) {
         } else if (!strcmp("-k", argv[i])) {
             password = argv[++i];
         } else if (!strcmp("-m", argv[i])) {
-            cipherType = pickCipher(argv[++i]);
+            method = pickCipher(argv[++i]);
         } else if (!strcmp("-V", argv[i])) {
             spdlog::set_level(spdlog::level::debug);
         }
     }
 
-    if (cipherType == AEAD::Invalid) {
+    if (method == AEAD::Invalid) {
         std::cout << "Invalid encrypt method.\n\n";
         printUsage();
         return 0;
@@ -95,14 +95,14 @@ int main(int argc, char* argv[]) {
             return 0;
         }
 
-        asio::co_spawn(ctx, tcpRemote(cipherType, remotePort, password), asio::detached);
+        asio::co_spawn(ctx, tcpRemote(method, remotePort, password), asio::detached);
     } else {
         if (remoteHost.empty() || remotePort.empty() || localPort.empty() || password.empty()) {
             printUsage();
             return 0;
         }
 
-        asio::co_spawn(ctx, tcpLocal(cipherType, remoteHost, remotePort, localPort, password), asio::detached);
+        asio::co_spawn(ctx, tcpLocal(method, remoteHost, remotePort, localPort, password), asio::detached);
     }
 
     asio::signal_set signals(ctx, SIGINT, SIGTERM);

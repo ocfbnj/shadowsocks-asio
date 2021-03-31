@@ -1,8 +1,5 @@
 #include <algorithm>
 
-#include <asio/ts/buffer.hpp>
-#include <spdlog/spdlog.h>
-
 #include "EncryptedConnection.h"
 
 EncryptedConnection::EncryptedConnection(TCPSocket s, AEAD::Ciphers ciphers)

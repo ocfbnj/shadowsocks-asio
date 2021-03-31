@@ -1,5 +1,5 @@
-#ifndef ENCRYPTED_SESSION_H
-#define ENCRYPTED_SESSION_H
+#ifndef ENCRYPTED_CONNECTION_H
+#define ENCRYPTED_CONNECTION_H
 
 #include <array>
 #include <memory>
@@ -49,8 +49,7 @@ asio::awaitable<void> readSalt(Reader auto& r, const AEADPtr& deC) {
     deC->setSalt(salt);
 }
 
-asio::awaitable<Size> readEncryptedPayload(Reader auto& r, const AEADPtr& deC,
-                                           BytesView out) {
+asio::awaitable<Size> readEncryptedPayload(Reader auto& r, const AEADPtr& deC, BytesView out) {
     Size tagSize = deC->tagSize();
     std::vector<Byte> buf(AEAD::MaximumPayloadSize + tagSize);
 
@@ -82,8 +81,7 @@ asio::awaitable<void> writeSalt(Writer auto& w, const AEADPtr& enC) {
     co_await w.write(salt);
 }
 
-asio::awaitable<Size> writeUnencryptedPayload(Writer auto& w, const AEADPtr& enC,
-                                              BytesView in) {
+asio::awaitable<Size> writeUnencryptedPayload(Writer auto& w, const AEADPtr& enC, BytesView in) {
     Size remaining = in.size();
     Size nWrite = 0;
     Size tagSize = enC->tagSize();
