@@ -1,5 +1,5 @@
 // This file implements ss-local and ss-remote
-// See http://shadowsocks.org/en/wiki/Protocol.html
+// See https://shadowsocks.org/en/wiki/Protocol.html
 
 #include <array>
 #include <string>
