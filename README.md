@@ -56,3 +56,9 @@ This project is for learning purposes.
 - Crypto++ 8.2.0-2 (`vcpkg install cryptopp`)
 - fmt 7.1.3#2 (`vcpkg install fmt`)
 - spdlog 1.8.0#3 (`vcpkg install spdlog`)
+
+## References
+- <https://shadowsocks.org>
+- <https://github.com/shadowsocks/shadowsocks-libev>
+- <https://github.com/shadowsocks/go-shadowsocks2>
+- <https://github.com/shadowsocks/shadowsocks-windows>
