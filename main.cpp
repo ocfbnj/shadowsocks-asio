@@ -22,7 +22,7 @@ static std::string_view remotePort;
 static std::string_view localPort;
 static std::string_view password;
 
-static AEAD::Cipher cipherType = AEAD::ChaCha20Poly1305;
+static AEAD::Method cipherType = AEAD::ChaCha20Poly1305;
 
 static void printUsage() {
     std::cout << "Usage: \n"
@@ -41,7 +41,7 @@ static void printUsage() {
                  "    -V                         Verbose mode.\n";
 }
 
-static AEAD::Cipher pickCipher(std::string_view method) {
+static AEAD::Method pickCipher(std::string_view method) {
     if (method == "chacha20-ietf-poly1305") {
         return AEAD::ChaCha20Poly1305;
     }

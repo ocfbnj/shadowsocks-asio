@@ -30,7 +30,7 @@ public:
 
     static constexpr std::string_view Info = "ss-subkey";
 
-    enum Cipher {
+    enum Method {
         ChaCha20Poly1305,
         AES256GCM,
         AES128GCM,
@@ -50,10 +50,10 @@ public:
         std::string msg;
     };
 
-    static Size getKeySize(Cipher type);
+    static Size getKeySize(Method type);
 
-    static Ciphers makeCiphers(Cipher type, ConstBytesView password);
-    static Ciphers makeCiphers(Cipher type, std::string_view password);
+    static Ciphers makeCiphers(Method type, ConstBytesView password);
+    static Ciphers makeCiphers(Method type, std::string_view password);
 
     virtual ~AEAD() = default;
 

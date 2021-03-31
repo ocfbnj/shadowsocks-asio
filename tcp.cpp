@@ -17,7 +17,7 @@
 #include "tcp.h"
 #include "type.h"
 
-asio::awaitable<void> tcpRemote(AEAD::Cipher type, std::string_view remotePort, std::string_view password) {
+asio::awaitable<void> tcpRemote(AEAD::Method type, std::string_view remotePort, std::string_view password) {
     auto executor = co_await asio::this_coro::executor;
 
     // listen
@@ -68,7 +68,7 @@ asio::awaitable<void> tcpRemote(AEAD::Cipher type, std::string_view remotePort, 
     }
 }
 
-asio::awaitable<void> tcpLocal(AEAD::Cipher type,
+asio::awaitable<void> tcpLocal(AEAD::Method type,
                                std::string_view remoteHost, std::string_view remotePort,
                                std::string_view localPort,
                                std::string_view password) {
