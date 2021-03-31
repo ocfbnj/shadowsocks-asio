@@ -19,6 +19,7 @@ void hkdfSha1(BytesView key, BytesView salt, BytesView subkey);
 // AEAD class is the interface for AEAD Cipher.
 class AEAD {
 public:
+    // Encryption and decryption ciphers.
     using Ciphers = std::pair<AEADPtr, AEADPtr>;
 
     static constexpr auto MaximumPayloadSize = 0x3FFF;
@@ -50,8 +51,10 @@ public:
         std::string msg;
     };
 
+    // getKeySize rturns the key size of the encryption method.
     static Size getKeySize(Method type);
 
+    // makeCiphers returns the encryption and decryption ciphers.
     static Ciphers makeCiphers(Method type, ConstBytesView password);
     static Ciphers makeCiphers(Method type, std::string_view password);
 
@@ -70,7 +73,11 @@ public:
 };
 
 // AEADBase implements the AEAD interface.
-template <typename CipherType, Size KeySize, Size SaltSize, Size NonceSize, Size TagSize>
+template <typename CipherType,
+          Size KeySize,
+          Size SaltSize,
+          Size NonceSize,
+          Size TagSize>
 class AEADBase : public AEAD {
 public:
     AEADBase(BytesView key) {
