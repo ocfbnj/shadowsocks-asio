@@ -35,8 +35,8 @@ public:
     // See https://shadowsocks.org/en/wiki/AEAD-Ciphers.html
     enum Method {
         ChaCha20Poly1305,
-        AES256GCM,
         AES128GCM,
+        AES256GCM,
         Invalid
     };
 

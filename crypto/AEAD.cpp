@@ -18,10 +18,10 @@ static std::unique_ptr<AEAD> create(AEAD::Method method, BytesView key) {
     switch (method) {
     case AEAD::ChaCha20Poly1305:
         return std::make_unique<ChaCha20Poly1305Base<IsEncryption>>(key);
-    case AEAD::AES256GCM:
-        return std::make_unique<AES256GCMBase<IsEncryption>>(key);
     case AEAD::AES128GCM:
         return std::make_unique<AES128GCMBase<IsEncryption>>(key);
+    case AEAD::AES256GCM:
+        return std::make_unique<AES256GCMBase<IsEncryption>>(key);
     default:
         break;
     }
@@ -32,8 +32,8 @@ static std::unique_ptr<AEAD> create(AEAD::Method method, BytesView key) {
 Size AEAD::getKeySize(Method method) {
     static std::unordered_map<Method, Size> keySizes{
         {ChaCha20Poly1305, ChaCha20Poly1305::KeySize},
-        {AES256GCM, AES256GCM::KeySize},
         {AES128GCM, AES128GCM::KeySize},
+        {AES256GCM, AES256GCM::KeySize},
     };
 
     return keySizes[method];

@@ -7,21 +7,7 @@
 #include "AEAD.h"
 
 template <bool IsEncryption>
-class AES256GCMBase;
-
-template <bool IsEncryption>
 class AES128GCMBase;
-
-class AES256GCM {
-public:
-    using Encryption = AES256GCMBase<true>;
-    using Decryption = AES256GCMBase<false>;
-
-    static constexpr auto KeySize = 32;
-    static constexpr auto SaltSize = 32;
-    static constexpr auto NonceSize = 12;
-    static constexpr auto TagSize = 16;
-};
 
 class AES128GCM {
 public:
@@ -30,6 +16,36 @@ public:
 
     static constexpr auto KeySize = 16;
     static constexpr auto SaltSize = 16;
+    static constexpr auto NonceSize = 12;
+    static constexpr auto TagSize = 16;
+};
+
+template <bool IsEncryption>
+class AES128GCMBase
+    : public AEADBase<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
+                      AES128GCM::KeySize,
+                      AES128GCM::SaltSize,
+                      AES128GCM::NonceSize,
+                      AES128GCM::TagSize> {
+public:
+    AES128GCMBase(BytesView key)
+        : AEADBase<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
+                   AES128GCM::KeySize,
+                   AES128GCM::SaltSize,
+                   AES128GCM::NonceSize,
+                   AES128GCM::TagSize>(key) {}
+};
+
+template <bool IsEncryption>
+class AES256GCMBase;
+
+class AES256GCM {
+public:
+    using Encryption = AES256GCMBase<true>;
+    using Decryption = AES256GCMBase<false>;
+
+    static constexpr auto KeySize = 32;
+    static constexpr auto SaltSize = 32;
     static constexpr auto NonceSize = 12;
     static constexpr auto TagSize = 16;
 };
@@ -48,22 +64,6 @@ public:
                    AES256GCM::SaltSize,
                    AES256GCM::NonceSize,
                    AES256GCM::TagSize>(key) {}
-};
-
-template <bool IsEncryption>
-class AES128GCMBase
-    : public AEADBase<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
-                      AES128GCM::KeySize,
-                      AES128GCM::SaltSize,
-                      AES128GCM::NonceSize,
-                      AES128GCM::TagSize> {
-public:
-    AES128GCMBase(BytesView key)
-        : AEADBase<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
-                   AES128GCM::KeySize,
-                   AES128GCM::SaltSize,
-                   AES128GCM::NonceSize,
-                   AES128GCM::TagSize>(key) {}
 };
 
 #endif
