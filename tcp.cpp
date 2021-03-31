@@ -1,8 +1,8 @@
 // This file implements ss-local and ss-remote
 // See https://shadowsocks.org/en/wiki/Protocol.html
 
-#include <array>
 #include <string>
+#include <vector>
 
 #include <asio/co_spawn.hpp>
 #include <asio/detached.hpp>
@@ -17,8 +17,12 @@
 #include "tcp.h"
 #include "type.h"
 
-asio::awaitable<void> tcpRemote(AEAD::Method type, std::string_view remotePort, std::string_view password) {
+asio::awaitable<void> tcpRemote(AEAD::Method method, std::string_view remotePort, std::string_view password) {
     auto executor = co_await asio::this_coro::executor;
+
+    // derive a key from password
+    std::vector<Byte> key(AEAD::getKeySize(method));
+    deriveKey(ConstBytesView{reinterpret_cast<const Byte*>(password.data()), password.size()}, key);
 
     // listen
     asio::ip::tcp::endpoint endpoint{asio::ip::tcp::v4(), static_cast<u16>(std::stoul(remotePort.data()))};
@@ -26,7 +30,7 @@ asio::awaitable<void> tcpRemote(AEAD::Method type, std::string_view remotePort, 
 
     spdlog::info("Listen on {}:{}", endpoint.address().to_string(), endpoint.port());
 
-    auto serverSocket = [&type, &password](TCPSocket peer) -> asio::awaitable<void> {
+    auto serverSocket = [&method, &key](TCPSocket peer) -> asio::awaitable<void> {
         auto executor = co_await asio::this_coro::executor;
 
         asio::ip::tcp::endpoint endpoint = peer.remote_endpoint();
@@ -34,7 +38,7 @@ asio::awaitable<void> tcpRemote(AEAD::Method type, std::string_view remotePort, 
 
         try {
             // establish an encrypted connection between ss-local and ss-remote
-            auto ec = std::make_shared<EncryptedConnection>(std::move(peer), AEAD::makeCiphers(type, password));
+            auto ec = std::make_shared<EncryptedConnection>(std::move(peer), AEAD::makeCiphers(method, key));
 
             // get target endpoint
             std::string host, port;
@@ -68,11 +72,15 @@ asio::awaitable<void> tcpRemote(AEAD::Method type, std::string_view remotePort, 
     }
 }
 
-asio::awaitable<void> tcpLocal(AEAD::Method type,
+asio::awaitable<void> tcpLocal(AEAD::Method method,
                                std::string_view remoteHost, std::string_view remotePort,
                                std::string_view localPort,
                                std::string_view password) {
     auto executor = co_await asio::this_coro::executor;
+
+    // derive a key from password
+    std::vector<Byte> key(AEAD::getKeySize(method));
+    deriveKey(ConstBytesView{reinterpret_cast<const Byte*>(password.data()), password.size()}, key);
 
     // resolve ss-remote server endpoint
     // TODO add timeout
@@ -88,7 +96,7 @@ asio::awaitable<void> tcpLocal(AEAD::Method type,
 
     spdlog::info("Listen on {}:{}", localEndpoint.address().to_string(), localEndpoint.port());
 
-    auto serverSocket = [&type, &password, &remoteEndpoint](TCPSocket peer) -> asio::awaitable<void> {
+    auto serverSocket = [&method, &key, &remoteEndpoint](TCPSocket peer) -> asio::awaitable<void> {
         auto executor = co_await asio::this_coro::executor;
 
         try {
@@ -111,7 +119,7 @@ asio::awaitable<void> tcpLocal(AEAD::Method type,
             co_await remoteSocket.async_connect(remoteEndpoint);
 
             // establish an encrypted connection between ss-local and ss-remote
-            auto eC = std::make_shared<EncryptedConnection>(std::move(peer), AEAD::makeCiphers(type, password));
+            auto eC = std::make_shared<EncryptedConnection>(std::move(peer), AEAD::makeCiphers(method, key));
 
             // write target address
             co_await eC->write(BytesView{reinterpret_cast<Byte*>(socks5Addr.data()), socks5Addr.size()});

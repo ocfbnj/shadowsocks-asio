@@ -27,11 +27,11 @@ class ChaCha20Poly1305Base
                       ChaCha20Poly1305::NonceSize,
                       ChaCha20Poly1305::TagSize> {
 public:
-    ChaCha20Poly1305Base(BytesView key) : AEADBase<CryptoPP::ChaCha20Poly1305_Final<IsEncryption>,
-                                                   ChaCha20Poly1305::KeySize,
-                                                   ChaCha20Poly1305::SaltSize,
-                                                   ChaCha20Poly1305::NonceSize,
-                                                   ChaCha20Poly1305::TagSize>(key) {}
+    ChaCha20Poly1305Base(ConstBytesView key) : AEADBase<CryptoPP::ChaCha20Poly1305_Final<IsEncryption>,
+                                                        ChaCha20Poly1305::KeySize,
+                                                        ChaCha20Poly1305::SaltSize,
+                                                        ChaCha20Poly1305::NonceSize,
+                                                        ChaCha20Poly1305::TagSize>(key) {}
 };
 
 #endif

@@ -57,8 +57,7 @@ public:
     static Size getKeySize(Method method);
 
     // makeCiphers returns the encryption and decryption ciphers.
-    static Ciphers makeCiphers(Method method, ConstBytesView password);
-    static Ciphers makeCiphers(Method method, std::string_view password);
+    static Ciphers makeCiphers(Method method, ConstBytesView key);
 
     virtual ~AEAD() = default;
 
@@ -83,7 +82,7 @@ template <typename CipherType,
           Size TagSize>
 class AEADBase : public AEAD {
 public:
-    AEADBase(BytesView key) : nonce(), havaSalt(false) {
+    AEADBase(ConstBytesView key) : nonce(), havaSalt(false) {
         std::copy(key.begin(), key.end(), this->key.begin());
     }
 

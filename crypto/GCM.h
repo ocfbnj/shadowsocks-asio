@@ -28,7 +28,7 @@ class AES128GCMBase
                       AES128GCM::NonceSize,
                       AES128GCM::TagSize> {
 public:
-    AES128GCMBase(BytesView key)
+    AES128GCMBase(ConstBytesView key)
         : AEADBase<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
                    AES128GCM::KeySize,
                    AES128GCM::SaltSize,
@@ -58,7 +58,7 @@ class AES256GCMBase
                       AES256GCM::NonceSize,
                       AES256GCM::TagSize> {
 public:
-    AES256GCMBase(BytesView key)
+    AES256GCMBase(ConstBytesView key)
         : AEADBase<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
                    AES256GCM::KeySize,
                    AES256GCM::SaltSize,
