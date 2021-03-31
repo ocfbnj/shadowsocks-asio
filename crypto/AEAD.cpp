@@ -11,6 +11,24 @@
 #include "ChaCha20Poly1305.h"
 #include "GCM.h"
 
+// This method is not a member function,
+// because there is a problem of mutual inclusion.
+template <bool IsEncryption>
+static std::unique_ptr<AEAD> create(AEAD::Cipher type, BytesView key) {
+    switch (type) {
+    case AEAD::ChaCha20Poly1305:
+        return std::make_unique<ChaCha20Poly1305Base<IsEncryption>>(key);
+    case AEAD::AES256GCM:
+        return std::make_unique<AES256GCMBase<IsEncryption>>(key);
+    case AEAD::AES128GCM:
+        return std::make_unique<AES128GCMBase<IsEncryption>>(key);
+    default:
+        break;
+    }
+
+    return {};
+}
+
 Size AEAD::getKeySize(Cipher type) {
     static std::unordered_map<Cipher, Size> keySizes{
         {ChaCha20Poly1305, ChaCha20Poly1305::KeySize},

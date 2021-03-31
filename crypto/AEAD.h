@@ -8,15 +8,6 @@
 
 #include "type.h"
 
-template <bool IsEncryption>
-class ChaCha20Poly1305Base;
-
-template <bool IsEncryption>
-class AES256GCMBase;
-
-template <bool IsEncryption>
-class AES128GCMBase;
-
 class AEAD;
 
 using AEADPtr = std::unique_ptr<AEAD>;
@@ -58,22 +49,6 @@ public:
     private:
         std::string msg;
     };
-
-    template <bool IsEncryption>
-    static std::unique_ptr<AEAD> create(Cipher type, BytesView key) {
-        switch (type) {
-        case AEAD::ChaCha20Poly1305:
-            return std::make_unique<ChaCha20Poly1305Base<IsEncryption>>(key);
-        case AEAD::AES256GCM:
-            return std::make_unique<AES256GCMBase<IsEncryption>>(key);
-        case AEAD::AES128GCM:
-            return std::make_unique<AES128GCMBase<IsEncryption>>(key);
-        default:
-            break;
-        }
-
-        return {};
-    }
 
     static Size getKeySize(Cipher type);
 
