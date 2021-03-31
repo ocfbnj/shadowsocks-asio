@@ -75,6 +75,8 @@ public:
         return {};
     }
 
+    static Size getKeySize(Cipher type);
+
     static Ciphers makeCiphers(Cipher type, ConstBytesView password);
     static Ciphers makeCiphers(Cipher type, std::string_view password);
 

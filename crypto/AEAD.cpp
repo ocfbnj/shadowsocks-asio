@@ -11,17 +11,23 @@
 #include "ChaCha20Poly1305.h"
 #include "GCM.h"
 
-static std::unordered_map<AEAD::Cipher, Size> keySizes{
-    {AEAD::Cipher::ChaCha20Poly1305, ChaCha20Poly1305::KeySize},
-    {AEAD::Cipher::AES256GCM, AES256GCM::KeySize},
-    {AEAD::Cipher::AES128GCM, AES128GCM::KeySize},
-};
+Size AEAD::getKeySize(Cipher type) {
+    static std::unordered_map<Cipher, Size> keySizes{
+        {ChaCha20Poly1305, ChaCha20Poly1305::KeySize},
+        {AES256GCM, AES256GCM::KeySize},
+        {AES128GCM, AES128GCM::KeySize},
+    };
 
-AEAD::Ciphers AEAD::makeCiphers(AEAD::Cipher type, ConstBytesView password) {
-    std::array<Byte, AEAD::MaximumKeySize> key;
-    deriveKey(ConstBytesView{password.data(), password.size()}, BytesView{key.data(), keySizes[type]});
+    return keySizes[type];
+}
 
-    return {AEAD::create<true>(type, key), AEAD::create<false>(type, key)};
+AEAD::Ciphers AEAD::makeCiphers(Cipher type, ConstBytesView password) {
+    // TODO deriveKey only needs to be called once
+
+    std::array<Byte, MaximumKeySize> key;
+    deriveKey(ConstBytesView{password.data(), password.size()}, BytesView{key.data(), getKeySize(type)});
+
+    return {create<true>(type, key), create<false>(type, key)};
 }
 
 AEAD::Ciphers AEAD::makeCiphers(AEAD::Cipher type, std::string_view password) {
