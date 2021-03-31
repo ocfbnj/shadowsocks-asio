@@ -34,7 +34,7 @@ private:
     AEADPtr deC;
 
     // When the buffer for calling the read function is too small, temporarily put it in buf.
-    std::array<u8, MaximumMessageSize> buf;
+    std::array<Byte, MaximumMessageSize> buf;
     Size index = 0;
     Size remaining = 0;
 };
@@ -44,7 +44,7 @@ asio::awaitable<void> readSalt(Reader auto& r, const AEADPtr& deC) {
         co_return;
     }
 
-    std::vector<u8> salt(deC->saltSize());
+    std::vector<Byte> salt(deC->saltSize());
     co_await readFull(r, salt);
     deC->setSalt(salt);
 }
@@ -52,13 +52,13 @@ asio::awaitable<void> readSalt(Reader auto& r, const AEADPtr& deC) {
 asio::awaitable<Size> readEncryptedPayload(Reader auto& r, const AEADPtr& deC,
                                            BytesView out) {
     Size tagSize = deC->tagSize();
-    std::vector<u8> buf(AEAD::MaximumPayloadSize + tagSize);
+    std::vector<Byte> buf(AEAD::MaximumPayloadSize + tagSize);
 
     // read encrypted length
     Size n = co_await readFull(r, BytesView{buf.data(), 2 + tagSize});
 
     u16 payloadLen = 0;
-    deC->decrypt(BytesView{buf.data(), n}, BytesView{reinterpret_cast<u8*>(&payloadLen), 2});
+    deC->decrypt(BytesView{buf.data(), n}, BytesView{reinterpret_cast<Byte*>(&payloadLen), 2});
     payloadLen = ::ntohs(payloadLen);
 
     // read encrypted payload
@@ -75,7 +75,7 @@ asio::awaitable<void> writeSalt(Writer auto& w, const AEADPtr& enC) {
 
     static thread_local CryptoPP::RandomPool rand;
     Size saltSize = enC->saltSize();
-    std::vector<u8> salt(saltSize);
+    std::vector<Byte> salt(saltSize);
 
     rand.GenerateBlock(salt.data(), saltSize);
     enC->setSalt(salt);
@@ -87,7 +87,7 @@ asio::awaitable<Size> writeUnencryptedPayload(Writer auto& w, const AEADPtr& enC
     Size remaining = in.size();
     Size nWrite = 0;
     Size tagSize = enC->tagSize();
-    std::vector<u8> buf(AEAD::MaximumPayloadSize + tagSize);
+    std::vector<Byte> buf(AEAD::MaximumPayloadSize + tagSize);
 
     while (remaining > 0) {
         u16 payloadLen = static_cast<u16>(remaining);
@@ -98,7 +98,7 @@ asio::awaitable<Size> writeUnencryptedPayload(Writer auto& w, const AEADPtr& enC
         u16 len = htons(payloadLen);
 
         // write encrypted length of payload
-        enC->encrypt(BytesView{reinterpret_cast<u8*>(&len), 2},
+        enC->encrypt(BytesView{reinterpret_cast<Byte*>(&len), 2},
                      BytesView{buf.data(), 2 + tagSize});
         co_await w.write(BytesView{buf.data(), 2 + tagSize});
 

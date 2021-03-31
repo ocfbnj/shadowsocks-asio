@@ -87,5 +87,5 @@ void hkdfSha1(BytesView key, BytesView salt, BytesView subkey) {
     hkdf.DeriveKey(subkey.data(), subkey.size(),
                    key.data(), key.size(),
                    salt.data(), salt.size(),
-                   reinterpret_cast<const u8*>(AEAD::Info.data()), AEAD::Info.size());
+                   reinterpret_cast<const Byte*>(AEAD::Info.data()), AEAD::Info.size());
 }
