@@ -14,8 +14,8 @@
 // This method is not a member function,
 // because there is a problem of mutual inclusion.
 template <bool IsEncryption>
-static std::unique_ptr<AEAD> create(AEAD::Method type, BytesView key) {
-    switch (type) {
+static std::unique_ptr<AEAD> create(AEAD::Method method, BytesView key) {
+    switch (method) {
     case AEAD::ChaCha20Poly1305:
         return std::make_unique<ChaCha20Poly1305Base<IsEncryption>>(key);
     case AEAD::AES256GCM:
@@ -29,27 +29,27 @@ static std::unique_ptr<AEAD> create(AEAD::Method type, BytesView key) {
     return {};
 }
 
-Size AEAD::getKeySize(Method type) {
+Size AEAD::getKeySize(Method method) {
     static std::unordered_map<Method, Size> keySizes{
         {ChaCha20Poly1305, ChaCha20Poly1305::KeySize},
         {AES256GCM, AES256GCM::KeySize},
         {AES128GCM, AES128GCM::KeySize},
     };
 
-    return keySizes[type];
+    return keySizes[method];
 }
 
-AEAD::Ciphers AEAD::makeCiphers(Method type, ConstBytesView password) {
+AEAD::Ciphers AEAD::makeCiphers(Method method, ConstBytesView password) {
     // TODO deriveKey only needs to be called once
 
     std::array<Byte, MaximumKeySize> key;
-    deriveKey(ConstBytesView{password.data(), password.size()}, BytesView{key.data(), getKeySize(type)});
+    deriveKey(ConstBytesView{password.data(), password.size()}, BytesView{key.data(), getKeySize(method)});
 
-    return {create<true>(type, key), create<false>(type, key)};
+    return {create<true>(method, key), create<false>(method, key)};
 }
 
-AEAD::Ciphers AEAD::makeCiphers(AEAD::Method type, std::string_view password) {
-    return makeCiphers(type, ConstBytesView{reinterpret_cast<const Byte*>(password.data()), password.size()});
+AEAD::Ciphers AEAD::makeCiphers(AEAD::Method method, std::string_view password) {
+    return makeCiphers(method, ConstBytesView{reinterpret_cast<const Byte*>(password.data()), password.size()});
 }
 
 void increment(BytesView num) {

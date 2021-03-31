@@ -17,20 +17,22 @@ void deriveKey(ConstBytesView password, BytesView key);
 void hkdfSha1(BytesView key, BytesView salt, BytesView subkey);
 
 // AEAD class is the interface for AEAD Cipher.
+// See https://shadowsocks.org/en/wiki/AEAD-Ciphers.html
 class AEAD {
 public:
     // Encryption and decryption ciphers.
     using Ciphers = std::pair<AEADPtr, AEADPtr>;
 
     static constexpr auto MaximumPayloadSize = 0x3FFF;
-
     static constexpr auto MaximumKeySize = 32;
     static constexpr auto MaximumSaltSize = 32;
     static constexpr auto MaximumNonceSize = 12;
     static constexpr auto MaximumTagSize = 16;
-
     static constexpr std::string_view Info = "ss-subkey";
 
+    // Compliant Shadowsocks implementations must support AEAD_CHACHA20_POLY1305.
+    // Implementations for devices with hardware AES acceleration should also implement AEAD_AES_128_GCM and AEAD_AES_256_GCM.
+    // See https://shadowsocks.org/en/wiki/AEAD-Ciphers.html
     enum Method {
         ChaCha20Poly1305,
         AES256GCM,
@@ -52,11 +54,11 @@ public:
     };
 
     // getKeySize rturns the key size of the encryption method.
-    static Size getKeySize(Method type);
+    static Size getKeySize(Method method);
 
     // makeCiphers returns the encryption and decryption ciphers.
-    static Ciphers makeCiphers(Method type, ConstBytesView password);
-    static Ciphers makeCiphers(Method type, std::string_view password);
+    static Ciphers makeCiphers(Method method, ConstBytesView password);
+    static Ciphers makeCiphers(Method method, std::string_view password);
 
     virtual ~AEAD() = default;
 
@@ -73,6 +75,7 @@ public:
 };
 
 // AEADBase implements the AEAD interface.
+// See https://shadowsocks.org/en/wiki/AEAD-Ciphers.html
 template <typename CipherType,
           Size KeySize,
           Size SaltSize,
@@ -80,7 +83,7 @@ template <typename CipherType,
           Size TagSize>
 class AEADBase : public AEAD {
 public:
-    AEADBase(BytesView key) {
+    AEADBase(BytesView key) : nonce(), havaSalt(false) {
         std::copy(key.begin(), key.end(), this->key.begin());
     }
 
@@ -127,8 +130,9 @@ public:
 private:
     CipherType cipher;
     std::array<Byte, KeySize> key;
-    std::array<Byte, NonceSize> nonce{};
-    bool havaSalt = false;
+    std::array<Byte, NonceSize> nonce;
+
+    bool havaSalt;
 };
 
 #endif
