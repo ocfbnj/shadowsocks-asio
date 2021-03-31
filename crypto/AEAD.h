@@ -42,7 +42,8 @@ public:
     enum Cipher {
         ChaCha20Poly1305,
         AES256GCM,
-        AES128GCM
+        AES128GCM,
+        Invalid
     };
 
     class DecryptionError : public std::exception {
@@ -61,11 +62,11 @@ public:
     template <bool IsEncryption>
     static std::unique_ptr<AEAD> create(Cipher type, BytesView key) {
         switch (type) {
-        case Cipher::ChaCha20Poly1305:
+        case AEAD::ChaCha20Poly1305:
             return std::make_unique<ChaCha20Poly1305Base<IsEncryption>>(key);
-        case Cipher::AES256GCM:
+        case AEAD::AES256GCM:
             return std::make_unique<AES256GCMBase<IsEncryption>>(key);
-        case Cipher::AES128GCM:
+        case AEAD::AES128GCM:
             return std::make_unique<AES128GCMBase<IsEncryption>>(key);
         default:
             break;
