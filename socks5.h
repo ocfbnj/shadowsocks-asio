@@ -11,7 +11,7 @@
 #include "io.h"
 #include "type.h"
 
-// VER is the value of VER field described in RFC 1928.
+// Ver is the value of VER field described in RFC 1928.
 constexpr auto Ver = 0x05;
 
 // The maximum length of target address (1 + 1 + 255 + 2).
