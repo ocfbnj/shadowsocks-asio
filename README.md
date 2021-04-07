@@ -28,7 +28,7 @@ $ shadowsocks-asio --Client -s ocfbnj.cn -p 5421 -l 1080 -k ocfbnj -m chacha20-i
 
 ### Reference
 
-~~~bash
+~~~text
 Usage: 
     --Server                   Server mode. (Default)
     --Client                   Client mode.
@@ -86,7 +86,7 @@ Usage:
         -DCMAKE_TOOLCHAIN_FILE=[path to vcpkg]/scripts/buildsystems/vcpkg.cmake
     $ cmake --build .
     ~~~
-    Where the [path to vcpkg] is your vcpkg root directory.
+    Where the `[path to vcpkg]` is your vcpkg root directory.
 
 ## Test on
 - Ubuntu Server 20.04 LTS
