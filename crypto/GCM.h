@@ -28,12 +28,11 @@ class AES128GCMBase
                       AES128GCM::NonceSize,
                       AES128GCM::TagSize> {
 public:
-    AES128GCMBase(ConstBytesView key)
-        : AEADBase<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
+    using AEADBase<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
                    AES128GCM::KeySize,
                    AES128GCM::SaltSize,
                    AES128GCM::NonceSize,
-                   AES128GCM::TagSize>(key) {}
+                   AES128GCM::TagSize>::AEADBase;
 };
 
 template <bool IsEncryption>
@@ -58,12 +57,11 @@ class AES256GCMBase
                       AES256GCM::NonceSize,
                       AES256GCM::TagSize> {
 public:
-    AES256GCMBase(ConstBytesView key)
-        : AEADBase<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
+    using AEADBase<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
                    AES256GCM::KeySize,
                    AES256GCM::SaltSize,
                    AES256GCM::NonceSize,
-                   AES256GCM::TagSize>(key) {}
+                   AES256GCM::TagSize>::AEADBase;
 };
 
 #endif
