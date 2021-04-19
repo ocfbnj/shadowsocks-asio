@@ -72,7 +72,7 @@ asio::awaitable<void> writeSalt(Writer auto& w, const AEADPtr& enC) {
         co_return;
     }
 
-    static thread_local CryptoPP::RandomPool rand;
+    thread_local CryptoPP::RandomPool rand;
     Size saltSize = enC->saltSize();
     std::vector<Byte> salt(saltSize);
 
