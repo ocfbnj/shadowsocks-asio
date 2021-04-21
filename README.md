@@ -93,8 +93,8 @@ Usage:
 - g++-10 (`sudo apt-get install g++-10`)
 - Asio(non-Boost) 1.18.1 (`vcpkg install asio`)
 - Crypto++ 8.2.0-2 (`vcpkg install cryptopp`)
-- fmt 7.1.3#2 (`vcpkg install fmt`)
-- spdlog 1.8.0#3 (`vcpkg install spdlog`)
+- fmt 7.1.3#3 (`vcpkg install fmt`)
+- spdlog 1.8.5#1 (`vcpkg install spdlog`)
 
 ## References
 - <https://shadowsocks.org>
