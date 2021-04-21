@@ -1,6 +1,7 @@
 #ifndef AEAD_H
 #define AEAD_H
 
+#include <array>
 #include <memory>
 #include <string>
 #include <string_view>
