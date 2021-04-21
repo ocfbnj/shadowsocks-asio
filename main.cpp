@@ -42,19 +42,17 @@ static void printUsage() {
 }
 
 static AEAD::Method pickCipher(std::string_view method) {
+    AEAD::Method res = AEAD::Invalid;
+
     if (method == "chacha20-ietf-poly1305") {
-        return AEAD::ChaCha20Poly1305;
+        res = AEAD::ChaCha20Poly1305;
+    } else if (method == "aes-128-gcm") {
+        res = AEAD::AES128GCM;
+    } else if (method == "aes-256-gcm") {
+        res = AEAD::AES256GCM;
     }
 
-    if (method == "aes-128-gcm") {
-        return AEAD::AES128GCM;
-    }
-
-    if (method == "aes-256-gcm") {
-        return AEAD::AES256GCM;
-    }
-
-    return AEAD::Invalid;
+    return res;
 }
 
 int main(int argc, char* argv[]) {
