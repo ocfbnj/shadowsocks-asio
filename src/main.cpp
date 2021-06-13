@@ -11,7 +11,8 @@
 #include <asio/ts/io_context.hpp>
 #include <spdlog/spdlog.h>
 
-#include "AEAD.h"
+#include "crypto/AEAD.h"
+
 #include "tcp.h"
 #include "type.h"
 
