@@ -51,7 +51,9 @@ Usage:
 - [fmt](https://github.com/fmtlib/fmt) is used to format strings.
 - [spdlog](https://github.com/gabime/spdlog) is used for logging.
 
-## Building on Ubuntu 20.04 LTS
+## How to build
+
+### Building with vcpkg on Ubuntu 20.04 LTS
 
 1. Install g++-10
     ~~~bash
@@ -87,6 +89,32 @@ Usage:
     $ cmake --build .
     ~~~
     Where the `[path to vcpkg]` is your vcpkg root directory.
+
+### Building with Conan on Ubuntu 21.04
+
+1. Install tools
+    ~~~bash
+    $ sudo apt install build-essential cmake ninja-build python3-pip
+    ~~~
+
+2. Install Conan
+    ~~~bash
+    $ pip install conan
+    $ source ~/.profile
+    $ conan profile new default --detect
+    $ conan profile update settings.compiler.libcxx=libstdc++11 default
+    ~~~
+
+3. Clone and build
+    ~~~bash
+    $ git clone https://github.com/ocfbnj/shadowsocks-asio
+    $ cd shadowsocks-asio
+    $ git switch conan
+    $ mkdir build && cd build
+    $ conan install ..
+    $ cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+    $ cmake --build .
+    ~~~
 
 ## Test on
 - Ubuntu Server 20.04 LTS
