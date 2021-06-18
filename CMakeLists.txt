@@ -17,11 +17,7 @@ else()
     )
 endif()
 
-# for include directory
-add_library(base INTERFACE)
-target_include_directories(base INTERFACE ${CMAKE_SOURCE_DIR}/include)
-add_library(ocfbnj::base ALIAS base)
-link_libraries(ocfbnj::base)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_subdirectory(src)
 
