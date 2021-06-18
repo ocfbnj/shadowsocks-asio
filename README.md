@@ -2,11 +2,9 @@
 
 An unofficial shadowsocks implementation that can work with official shadowsocks.
 
-This project uses Asio(non-Boost) network library, as well as the Coroutine and Concept features of C++20 to implement a concurrent server which can protect your Internet traffic.
+This project uses Asio network library, as well as the Coroutine and Concept features of C++20 to implement a concurrent server which can protect your Internet traffic.
 
-This project is for learning purposes.
-
-## Usage
+## Get Started
 
 ### Server
 
@@ -26,34 +24,35 @@ The client listens on port 1080 for incoming SOCKS5 connections and uses `chacha
 $ shadowsocks-asio --Client -s ocfbnj.cn -p 5421 -l 1080 -k ocfbnj -m chacha20-ietf-poly1305
 ~~~
 
-### Reference
-
-~~~text
-Usage: 
-    --Server                   Server mode. (Default)
-    --Client                   Client mode.
-
-    -s <server host>           Host name or IP address of your remote server.
-    -p <server port>           Port number of your remote server.
-    -l <local port>            Port number of your local server.
-    -k <password>              Password of your remote server.
-
-    -m <encrypt method>        Encrypt method:
-                               aes-128-gcm, aes-256-gcm,
-                               chacha20-ietf-poly1305 (Default).
-
-    -V                         Verbose mode.
-~~~
-
-## Dependent libraries
-- [Asio(non-Boost)](https://think-async.com/Asio/) is used to implement asynchronous logic in a synchronous manner. 
-- [Crypto++](https://github.com/weidai11/cryptopp) is used for encryption and decryption.
-- [fmt](https://github.com/fmtlib/fmt) is used to format strings.
-- [spdlog](https://github.com/gabime/spdlog) is used for logging.
-
 ## How to build
 
-### Building with vcpkg on Ubuntu 20.04 LTS
+### Building with Conan on Ubuntu 21.04
+
+1. Install tools
+    ~~~bash
+    $ sudo apt install build-essential cmake ninja-build python3-pip
+    ~~~
+
+2. Install and configure Conan
+    ~~~bash
+    $ pip install conan
+    $ source $HOME/.profile
+    $ conan profile new default --detect
+    $ conan profile update settings.compiler.libcxx=libstdc++11 default
+    ~~~
+    See <https://docs.conan.io/en/latest/getting_started.html>
+
+3. Clone and build
+    ~~~bash
+    $ git clone https://github.com/ocfbnj/shadowsocks-asio
+    $ cd shadowsocks-asio
+    $ mkdir build && cd build
+    $ conan install ..
+    $ cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+    $ cmake --build .
+    ~~~
+
+### Building with vcpkg on Ubuntu 20.04 LTS (Deprecated)
 
 1. Install g++-10
     ~~~bash
@@ -81,6 +80,7 @@ Usage:
     ~~~bash
     $ git clone https://github.com/ocfbnj/shadowsocks-asio
     $ cd shadowsocks-asio
+    $ git checkout -q v0.0.4
     $ mkdir build && cd build
     $ cmake .. \
         -G Ninja \
@@ -90,39 +90,19 @@ Usage:
     ~~~
     Where the `[path to vcpkg]` is your vcpkg root directory.
 
-### Building with Conan on Ubuntu 21.04
-
-1. Install tools
-    ~~~bash
-    $ sudo apt install build-essential cmake ninja-build python3-pip
-    ~~~
-
-2. Install Conan
-    ~~~bash
-    $ pip install conan
-    $ source ~/.profile
-    $ conan profile new default --detect
-    $ conan profile update settings.compiler.libcxx=libstdc++11 default
-    ~~~
-
-3. Clone and build
-    ~~~bash
-    $ git clone https://github.com/ocfbnj/shadowsocks-asio
-    $ cd shadowsocks-asio
-    $ git switch conan
-    $ mkdir build && cd build
-    $ conan install ..
-    $ cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
-    $ cmake --build .
-    ~~~
+## Dependent libraries
+- [Asio(non-Boost)](https://think-async.com/Asio/) is used to implement asynchronous logic in a synchronous manner.
+- [cryptopp](https://github.com/weidai11/cryptopp) is used for encryption and decryption.
+- [fmt](https://github.com/fmtlib/fmt) is used to format strings.
+- [spdlog](https://github.com/gabime/spdlog) is used for logging.
 
 ## Test on
-- Ubuntu Server 20.04 LTS
-- g++-10 (`sudo apt-get install g++-10`)
-- Asio(non-Boost) 1.18.1 (`vcpkg install asio`)
-- Crypto++ 8.2.0-2 (`vcpkg install cryptopp`)
-- fmt 7.1.3#3 (`vcpkg install fmt`)
-- spdlog 1.8.5#1 (`vcpkg install spdlog`)
+- Ubuntu Server 20.04 LTS, Ubuntu Server 21.04
+- gcc 10.3.0
+- Asio 1.18.2
+- cryptopp 8.5.0
+- fmt 7.1.3
+- spdlog 1.8.5
 
 ## References
 - <https://shadowsocks.org>
