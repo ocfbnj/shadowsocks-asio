@@ -3,9 +3,10 @@
 
 #include <gtest/gtest.h>
 
-#include "AEAD.h"
-#include "ChaCha20Poly1305.h"
-#include "GCM.h"
+#include "crypto/AEAD.h"
+#include "crypto/ChaCha20Poly1305.h"
+#include "crypto/GCM.h"
+
 #include "type.h"
 
 GTEST_TEST(increment, num0) {

@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 
+// TODO we don't need `asio::use_awaitable`
+#include <asio/use_awaitable.hpp>
+
 #include <asio/co_spawn.hpp>
 #include <asio/detached.hpp>
 #include <asio/ts/executor.hpp>
@@ -44,12 +47,12 @@ asio::awaitable<void> tcpRemote(AEAD::Method method, std::string_view remotePort
             std::string host, port;
             co_await readTgtAddr(*ec, host, port);
             Resolver r{executor};
-            Resolver::results_type results = co_await r.async_resolve(host, port);
+            Resolver::results_type results = co_await r.async_resolve(host, port, asio::use_awaitable);
             const asio::ip::tcp::endpoint& endpoint = *results.begin();
 
             // connect to target host
             TCPSocket socket{executor};
-            co_await socket.async_connect(endpoint);
+            co_await socket.async_connect(endpoint, asio::use_awaitable);
             auto c = std::make_shared<Connection>(std::move(socket));
 
             // proxy
@@ -67,7 +70,7 @@ asio::awaitable<void> tcpRemote(AEAD::Method method, std::string_view remotePort
     };
 
     while (true) {
-        TCPSocket peer = co_await acceptor.async_accept();
+        TCPSocket peer = co_await acceptor.async_accept(asio::use_awaitable);
         asio::co_spawn(asio::make_strand(executor), serverSocket(std::move(peer)), asio::detached);
     }
 }
@@ -85,7 +88,7 @@ asio::awaitable<void> tcpLocal(AEAD::Method method,
     // resolve ss-remote server endpoint
     // TODO add timeout
     Resolver resolver{executor};
-    Resolver::results_type results = co_await resolver.async_resolve(remoteHost.data(), remotePort.data());
+    Resolver::results_type results = co_await resolver.async_resolve(remoteHost.data(), remotePort.data(), asio::use_awaitable);
     const asio::ip::tcp::endpoint& remoteEndpoint = *results.begin();
 
     spdlog::debug("Remote server: {}:{}", remoteEndpoint.address().to_string(), remoteEndpoint.port());
@@ -109,14 +112,14 @@ asio::awaitable<void> tcpLocal(AEAD::Method method,
 
             // resolve target endpoint
             Resolver r{executor};
-            Resolver::results_type results = co_await r.async_resolve(host, port);
+            Resolver::results_type results = co_await r.async_resolve(host, port, asio::use_awaitable);
             const asio::ip::tcp::endpoint& targetEndpoint = *results.begin();
 
             spdlog::debug("Target address: {}:{}", targetEndpoint.address().to_string(), targetEndpoint.port());
 
             // connect to ss-remote server
             TCPSocket remoteSocket{executor};
-            co_await remoteSocket.async_connect(remoteEndpoint);
+            co_await remoteSocket.async_connect(remoteEndpoint, asio::use_awaitable);
 
             // establish an encrypted connection between ss-local and ss-remote
             auto eC = std::make_shared<EncryptedConnection>(std::move(peer), AEAD::makeCiphers(method, key));
@@ -139,7 +142,7 @@ asio::awaitable<void> tcpLocal(AEAD::Method method,
     };
 
     while (true) {
-        TCPSocket peer = co_await acceptor.async_accept();
+        TCPSocket peer = co_await acceptor.async_accept(asio::use_awaitable);
         asio::co_spawn(asio::make_strand(executor), serverSocket(std::move(peer)), asio::detached);
     }
 }

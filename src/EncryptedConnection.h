@@ -8,7 +8,8 @@
 
 #include <cryptopp/randpool.h>
 
-#include "AEAD.h"
+#include "crypto/AEAD.h"
+
 #include "Connection.h"
 #include "io.h"
 #include "type.h"

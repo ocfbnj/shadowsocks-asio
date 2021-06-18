@@ -1,34 +1,26 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.1.2)
 
 project(shadowsocks-asio)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
-find_package(asio CONFIG REQUIRED)
-find_package(fmt CONFIG REQUIRED)
-find_package(spdlog CONFIG REQUIRED)
+option(BUILD_TEST "Build the test program" ON)
 
-add_subdirectory(crypto)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
-list(APPEND LIBS
-    asio::asio
-    fmt::fmt
-    spdlog::spdlog
-    crypto)
+if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+    conan_basic_setup(TARGETS)
+else()
+    message(
+        WARNING
+            "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first"
+    )
+endif()
 
-list(APPEND SRC
-    Connection.cpp
-    EncryptedConnection.cpp
-    socks5.cpp
-    tcp.cpp
-    main.cpp)
+add_subdirectory(src)
 
-add_executable(${CMAKE_PROJECT_NAME} ${SRC})
-
-if(UNIX)
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -fcoroutines)
-endif(UNIX)
-
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(${CMAKE_PROJECT_NAME} ${LIBS})
+if(BUILD_TEST)
+    add_subdirectory(test)
+endif()
