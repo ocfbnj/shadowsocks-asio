@@ -1,5 +1,13 @@
-.vscode/
-.vs/
-out/
-build/
-CMakeSettings.json
+# VS Code
+/.vscode
+/build
+
+# MSVC
+/.vs
+/out
+/CMakeSettings.json
+
+# CLion
+/.idea
+/cmake-build-debug
+/cmake-build-release
