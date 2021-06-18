@@ -4,8 +4,9 @@
 #include <gtest/gtest.h>
 
 #include "crypto/AEAD.h"
-#include "crypto/ChaCha20Poly1305.h"
-#include "crypto/GCM.h"
+
+#include "../src/crypto/ChaCha20Poly1305.h"
+#include "../src/crypto/GCM.h"
 
 #include "type.h"
 
