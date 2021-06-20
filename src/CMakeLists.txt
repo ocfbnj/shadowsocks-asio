@@ -12,4 +12,4 @@ if(MSVC)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0601)
 endif()
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE CONAN_PKG::asio CONAN_PKG::fmt CONAN_PKG::spdlog ocfbnj::crypto)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE asio::asio fmt::fmt spdlog::spdlog ocfbnj::crypto)

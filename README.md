@@ -26,83 +26,38 @@ $ shadowsocks-asio --Client -s ocfbnj.cn -p 5421 -l 1080 -k ocfbnj -m chacha20-i
 
 ## How to build
 
-### Building with Conan on Ubuntu 21.04
+### Prerequisites
 
-1. Install tools
-    ~~~bash
-    $ sudo apt install build-essential cmake ninja-build python3-pip
-    ~~~
+- A compiler supporting C++20.
+- Python3 installed.
 
-2. Install and configure Conan
+### Building with Conan Package Manager
+
+1. Install conan
     ~~~bash
-    $ pip install conan
-    $ source $HOME/.profile
-    $ conan profile new default --detect
-    $ conan profile update settings.compiler.libcxx=libstdc++11 default
+    $ pip install conan -U
     ~~~
     See <https://docs.conan.io/en/latest/getting_started.html>
 
-3. Clone and build
+2. Clone and build
     ~~~bash
     $ git clone https://github.com/ocfbnj/shadowsocks-asio
     $ cd shadowsocks-asio
-    $ mkdir build && cd build
-    $ conan install ..
-    $ cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+    $ mkdir build
+    $ cd build
+    $ cmake .. -DCMAKE_BUILD_TYPE=Release
     $ cmake --build .
     ~~~
-
-### Building with vcpkg on Ubuntu 20.04 LTS (Deprecated)
-
-1. Install g++-10
-    ~~~bash
-    $ sudo apt-get install g++-10
-    ~~~
-
-2. Install CMake and Ninja
-    ~~~bash
-    $ sudo apt-get install cmake ninja-build
-    ~~~
-
-3. Install vcpkg
-    ~~~bash
-    $ git clone https://github.com/microsoft/vcpkg
-    $ ./vcpkg/bootstrap-vcpkg.sh
-    ~~~
-    See <https://github.com/microsoft/vcpkg#quick-start-unix>
-
-4. Install dependencies
-    ~~~bash
-    $ ./vcpkg install asio cryptopp fmt spdlog gtest
-    ~~~
-
-5. Clone and build
-    ~~~bash
-    $ git clone https://github.com/ocfbnj/shadowsocks-asio
-    $ cd shadowsocks-asio
-    $ git checkout -q v0.0.4
-    $ mkdir build && cd build
-    $ cmake .. \
-        -G Ninja \
-        -DCMAKE_CXX_COMPILER:FILEPATH=/bin/g++-10 \
-        -DCMAKE_TOOLCHAIN_FILE=[path to vcpkg]/scripts/buildsystems/vcpkg.cmake
-    $ cmake --build .
-    ~~~
-    Where the `[path to vcpkg]` is your vcpkg root directory.
 
 ## Dependent libraries
-- [Asio(non-Boost)](https://think-async.com/Asio/) is used to implement asynchronous logic in a synchronous manner.
+- [Asio](https://think-async.com/Asio/) is used to implement asynchronous logic in a synchronous manner.
 - [cryptopp](https://github.com/weidai11/cryptopp) is used for encryption and decryption.
 - [fmt](https://github.com/fmtlib/fmt) is used to format strings.
 - [spdlog](https://github.com/gabime/spdlog) is used for logging.
 
 ## Test on
-- Ubuntu Server 20.04 LTS, Ubuntu Server 21.04
-- gcc 10.3.0
-- Asio 1.18.2
-- cryptopp 8.5.0
-- fmt 7.1.3
-- spdlog 1.8.5
+- GCC 10.3.0
+- MSVC 19.29
 
 ## References
 - <https://shadowsocks.org>
