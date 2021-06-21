@@ -93,7 +93,7 @@ asio::awaitable<std::string> readTgtAddr(Reader auto& r, std::string& host, std:
         host = domainName;
 
         socks5Addr.push_back(static_cast<char>(len));
-        socks5Addr.append(std::move(domainName));
+        socks5Addr.append(domainName);
     } break;
     case Atyp::IPv6: {
         asio::ip::address_v6::bytes_type addr;

@@ -9,7 +9,7 @@
 // Connection encapsulates a socket for reading and writing.
 class Connection {
 public:
-    Connection(TCPSocket s);
+    explicit Connection(TCPSocket s);
 
     asio::awaitable<Size> read(BytesView buffer);
     asio::awaitable<Size> write(BytesView buffer);
