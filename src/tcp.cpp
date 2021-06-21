@@ -122,7 +122,7 @@ asio::awaitable<void> tcpLocal(AEAD::Method method,
             co_await remoteSocket.async_connect(remoteEndpoint, asio::use_awaitable);
 
             // establish an encrypted connection between ss-local and ss-remote
-            auto eC = std::make_shared<EncryptedConnection>(std::move(peer), AEAD::makeCiphers(method, key));
+            auto eC = std::make_shared<EncryptedConnection>(std::move(remoteSocket), AEAD::makeCiphers(method, key));
 
             // write target address
             co_await eC->write(BytesView{reinterpret_cast<Byte*>(socks5Addr.data()), socks5Addr.size()});
