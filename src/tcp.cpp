@@ -33,7 +33,7 @@ asio::awaitable<void> tcpRemote(AEAD::Method method, std::string_view remotePort
 
     spdlog::info("Listen on {}:{}", endpoint.address().to_string(), endpoint.port());
 
-    auto serverSocket = [&method, &key](TCPSocket peer) -> asio::awaitable<void> {
+    auto serveSocket = [&method, &key](TCPSocket peer) -> asio::awaitable<void> {
         auto executor = co_await asio::this_coro::executor;
 
         asio::ip::tcp::endpoint endpoint = peer.remote_endpoint();
@@ -71,7 +71,7 @@ asio::awaitable<void> tcpRemote(AEAD::Method method, std::string_view remotePort
 
     while (true) {
         TCPSocket peer = co_await acceptor.async_accept(asio::use_awaitable);
-        asio::co_spawn(asio::make_strand(executor), serverSocket(std::move(peer)), asio::detached);
+        asio::co_spawn(asio::make_strand(executor), serveSocket(std::move(peer)), asio::detached);
     }
 }
 
@@ -99,7 +99,7 @@ asio::awaitable<void> tcpLocal(AEAD::Method method,
 
     spdlog::info("Listen on {}:{}", localEndpoint.address().to_string(), localEndpoint.port());
 
-    auto serverSocket = [&method, &key, &remoteEndpoint](TCPSocket peer) -> asio::awaitable<void> {
+    auto serveSocket = [&method, &key, &remoteEndpoint](TCPSocket peer) -> asio::awaitable<void> {
         auto executor = co_await asio::this_coro::executor;
 
         try {
@@ -143,6 +143,6 @@ asio::awaitable<void> tcpLocal(AEAD::Method method,
 
     while (true) {
         TCPSocket peer = co_await acceptor.async_accept(asio::use_awaitable);
-        asio::co_spawn(asio::make_strand(executor), serverSocket(std::move(peer)), asio::detached);
+        asio::co_spawn(asio::make_strand(executor), serveSocket(std::move(peer)), asio::detached);
     }
 }
