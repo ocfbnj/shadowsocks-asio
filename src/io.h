@@ -10,20 +10,18 @@
 
 #include "type.h"
 
-// clang-format off
-
 template <typename T>
-concept Reader = requires (T r, BytesView buf) {
+concept Reader = requires(T r, BytesView buf) {
     { r.read(buf) } -> std::same_as<asio::awaitable<Size>>;
 };
 
 template <typename T>
-concept Writer = requires (T w, BytesView buf) {
+concept Writer = requires(T w, BytesView buf) {
     { w.write(buf) } -> std::same_as<asio::awaitable<Size>>;
 };
 
 template <typename T>
-concept Closer = requires (T c) {
+concept Closer = requires(T c) {
     { c.close() } -> std::same_as<void>;
 };
 
@@ -32,8 +30,6 @@ concept ReadWriter = Reader<T> && Writer<T>;
 
 template <typename T>
 concept ReadWriteCloser = Reader<T> && Writer<T> && Closer<T>;
-
-// clang-format on
 
 constexpr auto BufferSize = 32768;
 
