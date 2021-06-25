@@ -33,21 +33,44 @@ $ shadowsocks-asio --Client -s ocfbnj.cn -p 5421 -l 1080 -k ocfbnj -m chacha20-i
 
 ### Building with Conan Package Manager
 
-1. Install conan
+1. Install Conan
     ~~~bash
     $ pip install conan -U
     ~~~
-    See <https://docs.conan.io/en/latest/getting_started.html>
 
-2. Clone and build
+    > Important: If you are using GCC compiler >= 5.1, Conan will set the compiler.libcxx to the old ABI for backwards compatibility.<br/>
+    > You can avoid this with the following commands:<br/>
+    > ~~~bash
+    > $ conan profile new default --detect
+    > $ conan profile update settings.compiler.libcxx=libstdc++11 default
+    > ~~~
+    > See <https://docs.conan.io/en/latest/howtos/manage_gcc_abi.html#manage-gcc-abi>
+
+2. Clone and install dependencies
     ~~~bash
     $ git clone https://github.com/ocfbnj/shadowsocks-asio
     $ cd shadowsocks-asio
     $ mkdir build
     $ cd build
-    $ cmake .. -DCMAKE_BUILD_TYPE=Release
-    $ cmake --build .
+    $ conan install ..
     ~~~
+
+3. Build
+    - On Windows
+        ~~~bash
+        $ cmake .. -G "Visual Studio 16"
+        $ cmake --build . --config Release
+        ~~~
+
+    - On Linux
+        ~~~bash
+        $ cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+        $ cmake --build .
+        ~~~
+    
+    > Tip:<br/>
+    > I prefer to use the Ninja generator.<br/>
+    > See <https://ninja-build.org/>
 
 ## Dependent libraries
 - [Asio](https://think-async.com/Asio/) is used to implement asynchronous logic in a synchronous manner.
