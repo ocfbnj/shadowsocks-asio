@@ -107,12 +107,18 @@ int main(int argc, char* argv[]) {
     asio::signal_set signals(ctx, SIGINT, SIGTERM);
     signals.async_wait([&ctx](auto, auto) { ctx.stop(); });
 
-    std::vector<std::jthread> threadPool(std::thread::hardware_concurrency());
-    for (std::jthread& t : threadPool) {
-        t = std::jthread{[&ctx]() { ctx.run(); }};
+    std::vector<std::thread> threadPool(std::thread::hardware_concurrency());
+    for (std::thread& t : threadPool) {
+        t = std::thread{[&ctx]() { ctx.run(); }};
     }
 
     ctx.run();
+
+    for (std::thread& t : threadPool) {
+        if (t.joinable()) {
+            t.join();
+        }
+    }
 
     return 0;
 }

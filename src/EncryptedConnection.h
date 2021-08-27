@@ -59,7 +59,7 @@ asio::awaitable<Size> readEncryptedPayload(Reader auto& r, const AEADPtr& deC, B
 
     u16 payloadLen = 0;
     deC->decrypt(BytesView{buf.data(), n}, BytesView{reinterpret_cast<Byte*>(&payloadLen), 2});
-    payloadLen = ::ntohs(payloadLen);
+    payloadLen = ntohs(payloadLen);
 
     // read encrypted payload
     n = co_await readFull(r, BytesView{buf.data(), payloadLen + tagSize});

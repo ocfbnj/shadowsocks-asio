@@ -110,7 +110,7 @@ asio::awaitable<std::string> readTgtAddr(Reader auto& r, std::string& host, std:
     co_await readFull(r, BytesView{reinterpret_cast<Byte*>(&p), 2});
     socks5Addr.append(reinterpret_cast<const char*>(&p), 2);
 
-    p = ::ntohs(p);
+    p = ntohs(p);
     port = std::to_string(p);
 
     co_return socks5Addr;

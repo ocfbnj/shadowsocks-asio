@@ -4,8 +4,8 @@ list(APPEND LIBS asio::asio fmt::fmt spdlog::spdlog crypto)
 
 add_executable(${CMAKE_PROJECT_NAME} Connection.cpp EncryptedConnection.cpp socks5.cpp tcp.cpp main.cpp)
 
-if(UNIX)
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -fcoroutines)
+if(UNIX AND NOT APPLE)
+   target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -fcoroutines)
 endif()
 
 if(MSVC)
