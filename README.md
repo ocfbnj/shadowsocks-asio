@@ -81,6 +81,7 @@ $ shadowsocks-asio --Client -s ocfbnj.cn -p 5421 -l 1080 -k ocfbnj -m chacha20-i
 ## Test on
 - GCC 10.3.0
 - MSVC 19.29
+- Apple Clang 12.0.5
 
 ## References
 - <https://shadowsocks.org>
