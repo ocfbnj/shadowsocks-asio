@@ -1,9 +1,0 @@
-[requires]
-asio/1.19.2
-cryptopp/8.5.0
-fmt/8.0.1
-spdlog/1.9.2
-gtest/cci.20210126
-
-[generators]
-cmake_find_package
