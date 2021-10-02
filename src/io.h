@@ -8,6 +8,7 @@
 #include <asio/awaitable.hpp>
 #include <spdlog/spdlog.h>
 
+#include "Recorder.h"
 #include "type.h"
 
 template <typename T>
@@ -33,14 +34,18 @@ concept ReadWriteCloser = Reader<T> && Writer<T> && Closer<T>;
 
 constexpr auto BufferSize = 32768;
 
-template <ReadWriteCloser W, ReadWriteCloser R>
-asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
+template <ReadWriteCloser W, ReadWriteCloser R, Recorder Rec = DefaultRecorder>
+asio::awaitable<void> ioCopy(std::shared_ptr<W> w,
+                             std::shared_ptr<R> r,
+                             Rec recorder = DefaultRecorder{}) {
     std::array<Byte, BufferSize> buf;
 
     try {
         while (true) {
             Size size = co_await r->read(buf);
             co_await w->write(BytesView{buf.data(), size});
+
+            recorder.record(size);
         }
     } catch (const std::system_error& e) {
         r->close();

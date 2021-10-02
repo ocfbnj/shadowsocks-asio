@@ -13,6 +13,7 @@
 
 #include "crypto/AEAD.h"
 
+#include "SqliteTrafficRecorderHelper.h"
 #include "tcp.h"
 #include "type.h"
 
@@ -24,6 +25,9 @@ static std::string_view localPort;
 static std::string_view password;
 
 static AEAD::Method method = AEAD::ChaCha20Poly1305;
+
+static bool enableTrafficRecord = false;
+static std::string_view filename;
 
 static void printUsage() {
     std::cout << "Usage: \n"
@@ -38,6 +42,8 @@ static void printUsage() {
                  "    -m <encrypt method>        Encrypt method:\n"
                  "                               aes-128-gcm, aes-256-gcm,\n"
                  "                               chacha20-ietf-poly1305 (Default).\n"
+                 "\n"
+                 "    --record <filename>        Enable traffic record feature.\n"
                  "\n"
                  "    -V                         Verbose mode.\n";
 }
@@ -77,6 +83,10 @@ int main(int argc, char* argv[]) {
             method = pickCipher(argv[++i]);
         } else if (!strcmp("-V", argv[i])) {
             spdlog::set_level(spdlog::level::debug);
+        } else if (!strcmp("--traffic-record", argv[i])) {
+            enableTrafficRecord = true;
+            filename = argv[++i];
+            SqliteTrafficRecorderHelper::dbFilename = filename;
         }
     }
 
@@ -89,12 +99,12 @@ int main(int argc, char* argv[]) {
     asio::io_context ctx;
 
     if (remoteMode) {
-        if (remotePort.empty() || password.empty()) {
+        if (remotePort.empty() || password.empty() || (enableTrafficRecord && filename.empty())) {
             printUsage();
             return 0;
         }
 
-        asio::co_spawn(ctx, tcpRemote(method, remotePort, password), asio::detached);
+        asio::co_spawn(ctx, tcpRemote(method, remotePort, password, enableTrafficRecord), asio::detached);
     } else {
         if (remoteHost.empty() || remotePort.empty() || localPort.empty() || password.empty()) {
             printUsage();

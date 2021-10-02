@@ -30,6 +30,7 @@ conan_cmake_configure(
         cryptopp/8.5.0
         fmt/8.0.1
         spdlog/1.9.2
+        sqlite3/3.36.0
         gtest/cci.20210126
     GENERATORS
         cmake_find_package)
@@ -47,6 +48,7 @@ find_package(cryptopp)
 find_package(fmt)
 find_package(spdlog)
 find_package(GTest)
+find_package(SQLite3)
 
 #############################################################################################
 ########### Conan Package Manager End #######################################################

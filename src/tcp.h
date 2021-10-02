@@ -6,7 +6,11 @@
 
 #include "crypto/AEAD.h"
 
-asio::awaitable<void> tcpRemote(AEAD::Method method, std::string_view remotePort, std::string_view password);
+asio::awaitable<void> tcpRemote(AEAD::Method method,
+                                std::string_view remotePort,
+                                std::string_view password,
+                                bool enableTrafficRecord);
+
 asio::awaitable<void> tcpLocal(AEAD::Method method,
                                std::string_view remoteHost, std::string_view remotePort,
                                std::string_view localPort,

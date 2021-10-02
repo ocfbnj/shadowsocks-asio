@@ -12,12 +12,16 @@
 
 #include "AsyncObject.h"
 #include "EncryptedConnection.h"
+#include "SqliteTrafficRecorder.h"
 #include "io.h"
 #include "socks5.h"
 #include "tcp.h"
 #include "type.h"
 
-asio::awaitable<void> tcpRemote(AEAD::Method method, std::string_view remotePort, std::string_view password) {
+asio::awaitable<void> tcpRemote(AEAD::Method method,
+                                std::string_view remotePort,
+                                std::string_view password,
+                                bool enableTrafficRecord) {
     auto executor = co_await asio::this_coro::executor;
 
     // derive a key from password
@@ -30,33 +34,51 @@ asio::awaitable<void> tcpRemote(AEAD::Method method, std::string_view remotePort
 
     spdlog::info("Listen on {}:{}", endpoint.address().to_string(), endpoint.port());
 
-    auto serveSocket = [&method, &key](TCPSocket peer) -> asio::awaitable<void> {
+    auto serveSocket = [&method, &key, enableTrafficRecord](TCPSocket peer) -> asio::awaitable<void> {
         auto executor = co_await asio::this_coro::executor;
 
-        asio::ip::tcp::endpoint endpoint = peer.remote_endpoint();
-        std::string peerAddr = fmt::format("{}:{}", endpoint.address().to_string(), endpoint.port());
+        asio::ip::tcp::endpoint requestEndpoint = peer.remote_endpoint();
+        std::string requestHost = requestEndpoint.address().to_string();
+        std::string requestHostPort = std::to_string(requestEndpoint.port());
+        std::string requestAddr = fmt::format("{}:{}", requestHost, requestHostPort);
 
         try {
             // establish an encrypted connection between ss-local and ss-remote
             auto ec = std::make_shared<EncryptedConnection>(std::move(peer), AEAD::makeCiphers(method, key));
 
             // get target endpoint
-            std::string host, port;
-            co_await readTgtAddr(*ec, host, port);
+            std::string targetHost;
+            std::string targetPort;
+            co_await readTgtAddr(*ec, targetHost, targetPort);
+
             Resolver r{executor};
-            Resolver::results_type results = co_await r.async_resolve(host, port);
-            const asio::ip::tcp::endpoint& endpoint = *results.begin();
+            Resolver::results_type results = co_await r.async_resolve(targetHost, targetPort);
+            const asio::ip::tcp::endpoint& targetEndpoint = *results.begin();
 
             // connect to target host
             TCPSocket socket{executor};
-            co_await socket.async_connect(endpoint);
+            co_await socket.async_connect(targetEndpoint);
             auto c = std::make_shared<Connection>(std::move(socket));
 
-            // proxy
-            asio::co_spawn(executor, ioCopy(c, ec), asio::detached);
-            asio::co_spawn(executor, ioCopy(ec, c), asio::detached);
+            std::string targetAddr = fmt::format("{}:{}", targetHost, targetPort);
+            spdlog::debug("{} => {}", requestAddr, targetAddr);
+
+            if (enableTrafficRecord) {
+                TrafficRecorder auto recorder = SqliteTrafficRecorder{};
+                recorder.requestHost = requestHost;
+                recorder.targetHost = targetHost;
+
+                // proxy
+                asio::co_spawn(executor, ioCopy(c, ec), asio::detached);
+                asio::co_spawn(executor, ioCopy(ec, c, recorder), asio::detached);
+            } else {
+                // proxy
+                asio::co_spawn(executor, ioCopy(c, ec), asio::detached);
+                asio::co_spawn(executor, ioCopy(ec, c), asio::detached);
+            }
+
         } catch (const AEAD::DecryptionError& e) {
-            spdlog::warn("{}: peer {}", e.what(), peerAddr);
+            spdlog::warn("{}: peer {}", e.what(), requestAddr);
         } catch (const std::system_error& e) {
             if (e.code() != asio::error::eof && e.code() != asio::error::operation_aborted) {
                 spdlog::debug(e.what());
