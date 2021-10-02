@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
             method = pickCipher(argv[++i]);
         } else if (!strcmp("-V", argv[i])) {
             spdlog::set_level(spdlog::level::debug);
-        } else if (!strcmp("--traffic-record", argv[i])) {
+        } else if (!strcmp("--record", argv[i])) {
             enableTrafficRecord = true;
             filename = argv[++i];
             SqliteTrafficRecorderHelper::dbFilename = filename;
