@@ -9,9 +9,8 @@ concept Recorder = requires(T r, int64_t size) {
     { r.record(size) } -> std::same_as<void>;
 };
 
-class DefaultRecorder {
-public:
-    void record(int64_t) {}
+struct DefaultRecorder {
+    void record(int64_t);
 };
 
 #endif

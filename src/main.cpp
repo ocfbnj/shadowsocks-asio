@@ -12,8 +12,9 @@
 #include <spdlog/spdlog.h>
 
 #include "crypto/AEAD.h"
+#include "sqlitepp/sqlitepp.h"
 
-#include "SqliteTrafficRecorderHelper.h"
+#include "SQLiteTrafficRecorderHelper.h"
 #include "tcp.h"
 #include "type.h"
 
@@ -83,10 +84,13 @@ int main(int argc, char* argv[]) {
             method = pickCipher(argv[++i]);
         } else if (!strcmp("-V", argv[i])) {
             spdlog::set_level(spdlog::level::debug);
+        } else if (!strcmp("-VV", argv[i])) {
+            spdlog::set_level(spdlog::level::trace);
         } else if (!strcmp("--record", argv[i])) {
             enableTrafficRecord = true;
             filename = argv[++i];
-            SqliteTrafficRecorderHelper::dbFilename = filename;
+            setSingleThread();
+            SQLiteTrafficRecorderHelper::dbFilename = filename;
         }
     }
 
@@ -117,7 +121,7 @@ int main(int argc, char* argv[]) {
     asio::signal_set signals(ctx, SIGINT, SIGTERM);
     signals.async_wait([&ctx](auto, auto) { ctx.stop(); });
 
-    std::vector<std::thread> threadPool(std::thread::hardware_concurrency());
+    std::vector<std::thread> threadPool(std::thread::hardware_concurrency() + 2);
     for (std::thread& t : threadPool) {
         t = std::thread{[&ctx]() { ctx.run(); }};
     }

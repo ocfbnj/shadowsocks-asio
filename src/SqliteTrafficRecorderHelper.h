@@ -1,5 +1,5 @@
-#ifndef TRAFFIC_RECORDER_HELPER_H
-#define TRAFFIC_RECORDER_HELPER_H
+#ifndef SQLITE_TRAFFIC_RECORDER_HELPER_H
+#define SQLITE_TRAFFIC_RECORDER_HELPER_H
 
 #include <condition_variable>
 #include <cstdint>
@@ -22,16 +22,16 @@ struct hash<Hosts> {
 };
 } // namespace std
 
-class SqliteTrafficRecorderHelper {
+class SQLiteTrafficRecorderHelper {
 public:
     static void post(const std::string requestHost, const std::string targetHost, int64_t bytes);
     static std::string dbFilename;
 
 private:
-    SqliteTrafficRecorderHelper();
-    SqliteTrafficRecorderHelper(const SqliteTrafficRecorderHelper&) = delete;
-    SqliteTrafficRecorderHelper(SqliteTrafficRecorderHelper&&) = delete;
-    ~SqliteTrafficRecorderHelper();
+    SQLiteTrafficRecorderHelper();
+    SQLiteTrafficRecorderHelper(const SQLiteTrafficRecorderHelper&) = delete;
+    SQLiteTrafficRecorderHelper(SQLiteTrafficRecorderHelper&&) = delete;
+    ~SQLiteTrafficRecorderHelper();
 
     void createTableIfNotExists();
     void insertOrUpdate(const Hosts& hosts, int64_t bytes);

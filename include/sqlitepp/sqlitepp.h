@@ -4,4 +4,6 @@
 #include "SQLiteConnector.h"
 #include "SQLiteException.h"
 
+void setSingleThread();
+
 #endif

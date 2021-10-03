@@ -9,8 +9,8 @@ add_executable(
         EncryptedConnection.cpp
         Recorder.cpp
         TrafficRecorder.cpp
-        SqliteTrafficRecorder.cpp
-        SqliteTrafficRecorderHelper.cpp
+        SQLiteTrafficRecorder.cpp
+        SQLiteTrafficRecorderHelper.cpp
         socks5.cpp
         tcp.cpp
         main.cpp
@@ -30,6 +30,7 @@ target_link_libraries(
         asio::asio
         fmt::fmt
         spdlog::spdlog
+        nlohmann_json::nlohmann_json
         ocfbnj::crypto
         ocfbnj::sqlitepp
 )

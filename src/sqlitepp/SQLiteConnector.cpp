@@ -4,13 +4,13 @@
 #include "SQLiteConnector.h"
 #include "SQLiteException.h"
 
-SQLiteConnector::SQLiteConnector() : db(nullptr), errmsg(nullptr) {}
+SQLiteConnector::SQLiteConnector() noexcept : db(nullptr), errmsg(nullptr) {}
 
 SQLiteConnector::SQLiteConnector(std::string_view filename) : SQLiteConnector() {
     open(filename);
 }
 
-SQLiteConnector::SQLiteConnector(SQLiteConnector&& other) {
+SQLiteConnector::SQLiteConnector(SQLiteConnector&& other) noexcept {
     db = other.db;
     other.db = nullptr;
 }
@@ -21,24 +21,22 @@ SQLiteConnector::~SQLiteConnector() {
     }
 
     if (db) {
-        sqlite3_close(db);
+        auto ret = sqlite3_close(db);
+        if (ret != SQLITE_OK) {
+            spdlog::warn("close a sqlite3 connection error: {}", sqlite3_errstr(ret));
+        } else {
+            spdlog::trace("close a sqlite3 connection");
+        }
     }
-
-    spdlog::debug("close a sqlite3 connection");
 }
 
 void SQLiteConnector::open(std::string_view filename) {
-    // auto ret = sqlite3_open_v2(filename.data(),
-    //                            &db,
-    //                            SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX,
-    //                            nullptr);
-
     auto ret = sqlite3_open(filename.data(), &db);
     if (ret != SQLITE_OK) {
         throw SQLiteException{sqlite3_errmsg(db)};
     }
 
-    spdlog::debug("open a sqlite3 connection");
+    spdlog::trace("open a sqlite3 connection");
 }
 
 void SQLiteConnector::exec(std::string_view sql) {

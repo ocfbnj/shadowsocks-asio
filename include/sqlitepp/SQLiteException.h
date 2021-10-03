@@ -1,5 +1,5 @@
-#ifndef SQLITE_EXCEPTION
-#define SQLITE_EXCEPTION
+#ifndef SQLITE_EXCEPTION_H
+#define SQLITE_EXCEPTION_H
 
 #include <exception>
 #include <string>
@@ -7,7 +7,7 @@
 
 class SQLiteException : std::exception {
 public:
-    SQLiteException(std::string_view errorMessage);
+    explicit SQLiteException(std::string_view errorMessage) noexcept;
     const char* what() const noexcept override;
 
 private:

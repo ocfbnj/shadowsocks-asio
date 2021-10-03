@@ -7,10 +7,10 @@ struct sqlite3;
 
 class SQLiteConnector {
 public:
-    SQLiteConnector();
-    SQLiteConnector(std::string_view filename);
+    SQLiteConnector() noexcept;
+    explicit SQLiteConnector(std::string_view filename);
     SQLiteConnector(const SQLiteConnector&) = delete;
-    SQLiteConnector(SQLiteConnector&& other);
+    SQLiteConnector(SQLiteConnector&& other) noexcept;
     ~SQLiteConnector();
 
     void open(std::string_view filename);

@@ -12,7 +12,7 @@
 
 #include "AsyncObject.h"
 #include "EncryptedConnection.h"
-#include "SqliteTrafficRecorder.h"
+#include "SQLiteTrafficRecorder.h"
 #include "io.h"
 #include "socks5.h"
 #include "tcp.h"
@@ -64,13 +64,13 @@ asio::awaitable<void> tcpRemote(AEAD::Method method,
             spdlog::debug("{} => {}", requestAddr, targetAddr);
 
             if (enableTrafficRecord) {
-                TrafficRecorder auto recorder = SqliteTrafficRecorder{};
+                TrafficRecorder auto recorder = SQLiteTrafficRecorder{};
                 recorder.requestHost = requestHost;
                 recorder.targetHost = targetHost;
 
                 // proxy
                 asio::co_spawn(executor, ioCopy(c, ec), asio::detached);
-                asio::co_spawn(executor, ioCopy(ec, c, recorder), asio::detached);
+                asio::co_spawn(executor, ioCopy(ec, c, std::move(recorder)), asio::detached);
             } else {
                 // proxy
                 asio::co_spawn(executor, ioCopy(c, ec), asio::detached);

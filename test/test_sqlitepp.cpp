@@ -6,9 +6,9 @@
 
 #include "sqlitepp/sqlitepp.h"
 
-constexpr std::string_view dbFilename = "test.db";
+constexpr std::string_view dbFilename = "test_sqlitepp.db";
 
-constexpr std::string_view createTableSql{R"(
+constexpr std::string_view createTableIfNotExistsSql{R"(
 create table if not exists record (
     request_host varchar(255) not null,
     target_host varchar(255) not null,
@@ -33,22 +33,22 @@ set
 where
     request_host="{0}" and target_host="{1}";)"};
 
-constexpr std::string_view requestHost = "127.0.0.1";
-constexpr std::string_view targetHost = "google.com";
-constexpr uint64_t bytes = 32768;
-
 GTEST_TEST(connector, connect) {
     SQLiteConnector connector{dbFilename};
 }
 
 GTEST_TEST(connector, create_table) {
     SQLiteConnector connector{dbFilename};
-    connector.exec(createTableSql);
+    connector.exec(createTableIfNotExistsSql);
 }
 
 GTEST_TEST(connector, insert_or_update_recoard) {
     SQLiteConnector connector{dbFilename};
-    connector.exec(createTableSql);
+    connector.exec(createTableIfNotExistsSql);
+
+    constexpr std::string_view requestHost = "127.0.0.1";
+    constexpr std::string_view targetHost = "google.com";
+    constexpr int64_t bytes = 32768;
 
     std::string sql = fmt::format(insertOrUpdateSql, requestHost, targetHost, bytes);
     connector.exec(sql);

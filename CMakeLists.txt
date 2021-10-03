@@ -31,6 +31,7 @@ conan_cmake_configure(
         fmt/8.0.1
         spdlog/1.9.2
         sqlite3/3.36.0
+        nlohmann_json/3.10.2
         gtest/cci.20210126
     GENERATORS
         cmake_find_package)
@@ -47,8 +48,9 @@ find_package(asio)
 find_package(cryptopp)
 find_package(fmt)
 find_package(spdlog)
-find_package(GTest)
 find_package(SQLite3)
+find_package(nlohmann_json)
+find_package(GTest)
 
 #############################################################################################
 ########### Conan Package Manager End #######################################################
