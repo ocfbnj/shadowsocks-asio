@@ -51,8 +51,6 @@ find_package(GTest)
 #############################################################################################
 ########### Conan Package Manager End #######################################################
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
-
 add_subdirectory(src)
 
 if(BUILD_TEST)

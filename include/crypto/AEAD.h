@@ -1,5 +1,5 @@
-#ifndef AEAD_H
-#define AEAD_H
+#ifndef OCFBNJ_CRYPTO_AEAD_H
+#define OCFBNJ_CRYPTO_AEAD_H
 
 #include <array>
 #include <memory>
@@ -7,15 +7,13 @@
 #include <string_view>
 #include <utility>
 
+#include <crypto/crypto.h>
+
 #include "type.h"
 
 class AEAD;
 
 using AEADPtr = std::unique_ptr<AEAD>;
-
-void increment(BytesView num);
-void deriveKey(ConstBytesView password, BytesView key);
-void hkdfSha1(BytesView key, BytesView salt, BytesView subkey);
 
 // AEAD class is the interface for AEAD Cipher.
 // See https://shadowsocks.org/en/wiki/AEAD-Ciphers.html
@@ -54,7 +52,7 @@ public:
         std::string msg;
     };
 
-    // getKeySize rturns the key size of the encryption method.
+    // getKeySize returns the key size of the encryption method.
     static Size getKeySize(Method method);
 
     // makeCiphers returns the encryption and decryption ciphers.
@@ -74,16 +72,16 @@ public:
     virtual Size tagSize() const = 0;
 };
 
-// AEADBase implements the AEAD interface.
+// AEADImpl implements the AEAD interface.
 // See https://shadowsocks.org/en/wiki/AEAD-Ciphers.html
 template <typename CipherType,
           Size KeySize,
           Size SaltSize,
           Size NonceSize,
           Size TagSize>
-class AEADBase : public AEAD {
+class AEADImpl : public AEAD {
 public:
-    AEADBase(ConstBytesView key) : nonce(), havaSalt(false) {
+    AEADImpl(ConstBytesView key) : nonce(), havaSalt(false) {
         std::copy(key.begin(), key.end(), this->key.begin());
     }
 

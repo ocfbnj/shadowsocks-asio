@@ -3,14 +3,13 @@
 
 #include <gtest/gtest.h>
 
-#include "crypto/AEAD.h"
-
-#include "../src/crypto/ChaCha20Poly1305.h"
-#include "../src/crypto/GCM.h"
+#include <crypto/AEAD.h>
+#include <crypto/ChaCha20Poly1305.h>
+#include <crypto/GCM.h>
 
 #include "type.h"
 
-GTEST_TEST(increment, num0) {
+TEST(increment, num0) {
     std::array<Byte, 2> num{0, 0};
     std::array<Byte, 2> expectNum{1, 0};
 
@@ -18,7 +17,7 @@ GTEST_TEST(increment, num0) {
     EXPECT_EQ(num, expectNum);
 }
 
-GTEST_TEST(increment, num1) {
+TEST(increment, num1) {
     std::array<Byte, 2> num{1, 0};
     std::array<Byte, 2> expectNum{2, 0};
 
@@ -26,7 +25,7 @@ GTEST_TEST(increment, num1) {
     EXPECT_EQ(num, expectNum);
 }
 
-GTEST_TEST(increment, num255) {
+TEST(increment, num255) {
     std::array<Byte, 2> num{255, 0};
     std::array<Byte, 2> expectNum{0, 1};
 
@@ -34,7 +33,7 @@ GTEST_TEST(increment, num255) {
     EXPECT_EQ(num, expectNum);
 }
 
-GTEST_TEST(increment, num256) {
+TEST(increment, num256) {
     std::array<Byte, 2> num{0, 1};
     std::array<Byte, 2> expectNum{1, 1};
 
@@ -42,7 +41,7 @@ GTEST_TEST(increment, num256) {
     EXPECT_EQ(num, expectNum);
 }
 
-GTEST_TEST(hkdfSha1, key128) {
+TEST(hkdfSha1, key128) {
     std::array<Byte, 16> key{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     std::array<Byte, 16> salt{'1', '2', '3', '4', '5', '6', '7', '8', '1', '2', '3', '4', '5', '6', '7', '8'};
     std::array<Byte, 16> subkey;
@@ -52,7 +51,7 @@ GTEST_TEST(hkdfSha1, key128) {
     EXPECT_EQ(subkey, expectSubkey);
 }
 
-GTEST_TEST(hkdfSha1, key256) {
+TEST(hkdfSha1, key256) {
     std::array<Byte, 32> key{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     std::array<Byte, 32> salt{'1', '2', '3', '4', '5', '6', '7', '8', '1', '2', '3', '4', '5', '6', '7', '8',
@@ -65,7 +64,7 @@ GTEST_TEST(hkdfSha1, key256) {
     EXPECT_EQ(subkey, expectSubkey);
 }
 
-GTEST_TEST(deriveKey, key128) {
+TEST(deriveKey, key128) {
     std::array<Byte, 4> password{'h', 'e', 'h', 'e'};
     std::array<Byte, 16> key;
     std::array<Byte, 16> expectKey{82, 156, 168, 5, 10, 0, 24, 7, 144, 207, 136, 182, 52, 104, 130, 106};
@@ -74,7 +73,7 @@ GTEST_TEST(deriveKey, key128) {
     EXPECT_EQ(key, expectKey);
 }
 
-GTEST_TEST(deriveKey, key256) {
+TEST(deriveKey, key256) {
     std::array<Byte, 4> password{'h', 'e', 'h', 'e'};
     std::array<Byte, 32> key;
     std::array<Byte, 32> expectKey{82, 156, 168, 5, 10, 0, 24, 7, 144, 207, 136, 182, 52, 104, 130, 106,
@@ -84,7 +83,7 @@ GTEST_TEST(deriveKey, key256) {
     EXPECT_EQ(key, expectKey);
 }
 
-GTEST_TEST(ChaCha20Poly1305, encrypt) {
+TEST(ChaCha20Poly1305, encrypt) {
     std::array<Byte, ChaCha20Poly1305::KeySize> key{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                                                     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     std::array<Byte, 5> message{'h', 'e', 'l', 'l', 'o'};
@@ -98,7 +97,7 @@ GTEST_TEST(ChaCha20Poly1305, encrypt) {
     EXPECT_EQ(ciphertext, expectCiphertext);
 }
 
-GTEST_TEST(ChaCha20Poly1305, decrypt) {
+TEST(ChaCha20Poly1305, decrypt) {
     std::array<Byte, ChaCha20Poly1305::KeySize> key{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                                                     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     std::array<Byte, 5 + ChaCha20Poly1305::TagSize> ciphertext{
@@ -112,7 +111,7 @@ GTEST_TEST(ChaCha20Poly1305, decrypt) {
     EXPECT_EQ(message, expectMessage);
 }
 
-GTEST_TEST(AES128GCM, encrypt) {
+TEST(AES128GCM, encrypt) {
     std::array<Byte, AES128GCM::KeySize> key{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     std::array<Byte, 5> message{'h', 'e', 'l', 'l', 'o'};
     std::array<Byte, 5 + AES128GCM::TagSize> ciphertext;
@@ -125,7 +124,7 @@ GTEST_TEST(AES128GCM, encrypt) {
     EXPECT_EQ(ciphertext, expectCiphertext);
 }
 
-GTEST_TEST(AES128GCM, decrypt) {
+TEST(AES128GCM, decrypt) {
     std::array<Byte, AES128GCM::KeySize> key{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     std::array<Byte, 5 + AES128GCM::TagSize> ciphertext{
         155, 81, 62, 31, 73, 81, 203, 33, 80, 20, 82,
@@ -138,7 +137,7 @@ GTEST_TEST(AES128GCM, decrypt) {
     EXPECT_EQ(message, expectMessage);
 }
 
-GTEST_TEST(AES256GCM, encrypt) {
+TEST(AES256GCM, encrypt) {
     std::array<Byte, AES256GCM::KeySize> key{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                                              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     std::array<Byte, 5> message{'h', 'e', 'l', 'l', 'o'};
@@ -153,7 +152,7 @@ GTEST_TEST(AES256GCM, encrypt) {
     EXPECT_EQ(ciphertext, expectCiphertext);
 }
 
-GTEST_TEST(AES256GCM, decrypt) {
+TEST(AES256GCM, decrypt) {
     std::array<Byte, AES256GCM::KeySize> key{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                                              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     std::array<Byte, 5 + AES256GCM::TagSize> ciphertext{

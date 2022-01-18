@@ -1,18 +1,18 @@
-#ifndef GCM_H
-#define GCM_H
+#ifndef OCFBNJ_CRYPTO_GCM_H
+#define OCFBNJ_CRYPTO_GCM_H
 
 #include <cryptopp/aes.h>
 #include <cryptopp/gcm.h>
 
-#include "AEAD.h"
+#include <crypto/AEAD.h>
 
 template <bool IsEncryption>
-class AES128GCMBase;
+class AES128GCMImpl;
 
 class AES128GCM {
 public:
-    using Encryption = AES128GCMBase<true>;
-    using Decryption = AES128GCMBase<false>;
+    using Encryption = AES128GCMImpl<true>;
+    using Decryption = AES128GCMImpl<false>;
 
     static constexpr auto KeySize = 16;
     static constexpr auto SaltSize = 16;
@@ -21,27 +21,27 @@ public:
 };
 
 template <bool IsEncryption>
-class AES128GCMBase
-    : public AEADBase<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
+class AES128GCMImpl
+    : public AEADImpl<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
                       AES128GCM::KeySize,
                       AES128GCM::SaltSize,
                       AES128GCM::NonceSize,
                       AES128GCM::TagSize> {
 public:
-    using AEADBase<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
+    using AEADImpl<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
                    AES128GCM::KeySize,
                    AES128GCM::SaltSize,
                    AES128GCM::NonceSize,
-                   AES128GCM::TagSize>::AEADBase;
+                   AES128GCM::TagSize>::AEADImpl;
 };
 
 template <bool IsEncryption>
-class AES256GCMBase;
+class AES256GCMImpl;
 
 class AES256GCM {
 public:
-    using Encryption = AES256GCMBase<true>;
-    using Decryption = AES256GCMBase<false>;
+    using Encryption = AES256GCMImpl<true>;
+    using Decryption = AES256GCMImpl<false>;
 
     static constexpr auto KeySize = 32;
     static constexpr auto SaltSize = 32;
@@ -50,18 +50,18 @@ public:
 };
 
 template <bool IsEncryption>
-class AES256GCMBase
-    : public AEADBase<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
+class AES256GCMImpl
+    : public AEADImpl<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
                       AES256GCM::KeySize,
                       AES256GCM::SaltSize,
                       AES256GCM::NonceSize,
                       AES256GCM::TagSize> {
 public:
-    using AEADBase<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
+    using AEADImpl<CryptoPP::GCM_Final<CryptoPP::AES, CryptoPP::GCM_2K_Tables, IsEncryption>,
                    AES256GCM::KeySize,
                    AES256GCM::SaltSize,
                    AES256GCM::NonceSize,
-                   AES256GCM::TagSize>::AEADBase;
+                   AES256GCM::TagSize>::AEADImpl;
 };
 
 #endif

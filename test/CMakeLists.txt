@@ -1,5 +1,4 @@
 if(TARGET GTest::gtest AND TARGET GTest::gtest_main)
     add_executable(test_crypto test_crypto.cpp)
-    target_include_directories(test_crypto PRIVATE ${CMAKE_SOURCE_DIR}/include/crypto)
-    target_link_libraries(test_crypto PRIVATE GTest::gtest GTest::gtest_main cryptopp::cryptopp ocfbnj::crypto)
+    target_link_libraries(test_crypto PRIVATE GTest::gtest GTest::gtest_main ocfbnj::crypto)
 endif()
