@@ -1,7 +1,5 @@
 add_subdirectory(crypto)
 
-list(APPEND LIBS asio::asio fmt::fmt spdlog::spdlog crypto)
-
 add_executable(${CMAKE_PROJECT_NAME} Connection.cpp EncryptedConnection.cpp socks5.cpp tcp.cpp main.cpp)
 
 if(UNIX AND NOT APPLE)
