@@ -26,9 +26,9 @@ include(${CMAKE_BINARY_DIR}/conan.cmake)
 # Add requires here
 conan_cmake_configure(
     REQUIRES
-        asio/1.19.2
+        asio/1.21.0
         cryptopp/8.5.0
-        fmt/8.0.1
+        fmt/8.1.1
         spdlog/1.9.2
         gtest/cci.20210126
     GENERATORS
