@@ -53,7 +53,7 @@ shadowsocks-asio --Client -s ocfbnj.cn -p 5421 -l 1080 -k ocfbnj -m chacha20-iet
 2. Clone and install dependencies
 
     ~~~bash
-    git clone https://github.com/ocfbnj/shadowsocks-asio
+    git clone https://github.com/ocfbnj/shadowsocks-asio --recurse-submodules
     cd shadowsocks-asio
     mkdir build
     cd build
