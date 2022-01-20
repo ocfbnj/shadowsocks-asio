@@ -57,7 +57,6 @@ shadowsocks-asio --Client -s ocfbnj.cn -p 5421 -l 1080 -k ocfbnj -m chacha20-iet
     cd shadowsocks-asio
     mkdir build
     cd build
-    conan install ..
     ~~~
 
 3. Build
@@ -68,10 +67,10 @@ shadowsocks-asio --Client -s ocfbnj.cn -p 5421 -l 1080 -k ocfbnj -m chacha20-iet
         cmake --build . --config Release
         ~~~
 
-    - On Linux
+    - On Linux or Mac OS
 
         ~~~bash
-        cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+        cmake .. -DCMAKE_BUILD_TYPE=Release
         cmake --build .
         ~~~
 
