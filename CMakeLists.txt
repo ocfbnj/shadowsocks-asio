@@ -52,6 +52,7 @@ find_package(GTest)
 ########### Conan Package Manager End #######################################################
 
 add_subdirectory(src)
+add_subdirectory(libs/crypto/src)
 
 if(BUILD_TEST)
     add_subdirectory(test)
