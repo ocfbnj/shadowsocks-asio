@@ -3,21 +3,21 @@
 
 #include <array>
 #include <concepts>
+#include <cstdint>
+#include <span>
 #include <system_error>
 
 #include <asio/awaitable.hpp>
 #include <spdlog/spdlog.h>
 
-#include "type.h"
-
 template <typename T>
-concept Reader = requires(T r, BytesView buf) {
-    { r.read(buf) } -> std::same_as<asio::awaitable<Size>>;
+concept Reader = requires(T r, std::span<std::uint8_t> buf) {
+    { r.read(buf) } -> std::same_as<asio::awaitable<std::size_t>>;
 };
 
 template <typename T>
-concept Writer = requires(T w, BytesView buf) {
-    { w.write(buf) } -> std::same_as<asio::awaitable<Size>>;
+concept Writer = requires(T w, std::span<const std::uint8_t> buf) {
+    { w.write(buf) } -> std::same_as<asio::awaitable<std::size_t>>;
 };
 
 template <typename T>
@@ -35,12 +35,12 @@ constexpr auto BufferSize = 32768;
 
 template <ReadWriteCloser W, ReadWriteCloser R>
 asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
-    std::array<Byte, BufferSize> buf;
+    std::array<std::uint8_t, BufferSize> buf;
 
     try {
         while (true) {
-            Size size = co_await r->read(buf);
-            co_await w->write(BytesView{buf.data(), size});
+            std::size_t size = co_await r->read(buf);
+            co_await w->write(std::span{buf.data(), size});
         }
     } catch (const std::system_error& e) {
         r->close();
@@ -53,13 +53,13 @@ asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
 }
 
 // readFull reads exactly buf.size() bytes from r.
-asio::awaitable<Size> readFull(Reader auto& r, BytesView buf) {
-    Byte* data = buf.data();
-    Size nRead = 0;
-    Size remaining = buf.size();
+asio::awaitable<std::size_t> readFull(Reader auto& r, std::span<std::uint8_t> buf) {
+    std::uint8_t* data = buf.data();
+    std::size_t nRead = 0;
+    std::size_t remaining = buf.size();
 
     while (remaining > 0) {
-        Size n = co_await r.read(BytesView{data + nRead, remaining});
+        std::size_t n = co_await r.read(std::span{data + nRead, remaining});
 
         nRead += n;
         remaining -= n;

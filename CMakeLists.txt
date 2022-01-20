@@ -27,7 +27,7 @@ include(${CMAKE_BINARY_DIR}/conan.cmake)
 conan_cmake_configure(
     REQUIRES
         asio/1.21.0
-        cryptopp/8.5.0
+        mbedtls/3.1.0
         fmt/8.1.1
         spdlog/1.9.2
         gtest/cci.20210126
@@ -42,10 +42,10 @@ conan_cmake_install(
     SETTINGS ${settings})
 
 # Add `find_package` here
-find_package(asio)
-find_package(cryptopp)
-find_package(fmt)
-find_package(spdlog)
+find_package(asio REQUIRED)
+find_package(MbedTLS REQUIRED)
+find_package(fmt REQUIRED)
+find_package(spdlog REQUIRED)
 find_package(GTest)
 
 #############################################################################################

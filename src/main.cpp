@@ -11,10 +11,9 @@
 #include <asio/ts/io_context.hpp>
 #include <spdlog/spdlog.h>
 
-#include "crypto/AEAD.h"
+#include <crypto/aead/AEAD.h>
 
 #include "tcp.h"
-#include "type.h"
 
 static bool remoteMode = true;
 
@@ -23,7 +22,7 @@ static std::string_view remotePort;
 static std::string_view localPort;
 static std::string_view password;
 
-static AEAD::Method method = AEAD::ChaCha20Poly1305;
+static crypto::AEAD::Method method = crypto::AEAD::ChaCha20Poly1305;
 
 static void printUsage() {
     std::cout << "Usage: \n"
@@ -42,15 +41,15 @@ static void printUsage() {
                  "    -V                         Verbose mode.\n";
 }
 
-static AEAD::Method pickCipher(std::string_view method) {
-    AEAD::Method res = AEAD::Invalid;
+static crypto::AEAD::Method pickCipher(std::string_view method) {
+    crypto::AEAD::Method res = crypto::AEAD::Invalid;
 
     if (method == "chacha20-ietf-poly1305") {
-        res = AEAD::ChaCha20Poly1305;
+        res = crypto::AEAD::ChaCha20Poly1305;
     } else if (method == "aes-128-gcm") {
-        res = AEAD::AES128GCM;
+        res = crypto::AEAD::AES128GCM;
     } else if (method == "aes-256-gcm") {
-        res = AEAD::AES256GCM;
+        res = crypto::AEAD::AES256GCM;
     }
 
     return res;
@@ -80,7 +79,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (method == AEAD::Invalid) {
+    if (method == crypto::AEAD::Invalid) {
         std::cout << "Invalid encrypt method.\n\n";
         printUsage();
         return 0;

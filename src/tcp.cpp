@@ -10,22 +10,23 @@
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
+#include <crypto/crypto.h>
+
 #include "AsyncObject.h"
 #include "EncryptedConnection.h"
 #include "io.h"
 #include "socks5.h"
 #include "tcp.h"
-#include "type.h"
 
-asio::awaitable<void> tcpRemote(AEAD::Method method, std::string_view remotePort, std::string_view password) {
+asio::awaitable<void> tcpRemote(crypto::AEAD::Method method, std::string_view remotePort, std::string_view password) {
     auto executor = co_await asio::this_coro::executor;
 
     // derive a key from password
-    std::vector<Byte> key(AEAD::getKeySize(method));
-    deriveKey(ConstBytesView{reinterpret_cast<const Byte*>(password.data()), password.size()}, key);
+    std::vector<std::uint8_t> key(crypto::AEAD::keySize(method));
+    crypto::deriveKey(std::span{reinterpret_cast<const std::uint8_t*>(password.data()), password.size()}, key);
 
     // listen
-    asio::ip::tcp::endpoint endpoint{asio::ip::tcp::v4(), static_cast<u16>(std::stoul(remotePort.data()))};
+    asio::ip::tcp::endpoint endpoint{asio::ip::tcp::v4(), static_cast<std::uint16_t>(std::stoul(remotePort.data()))};
     Acceptor acceptor{executor, endpoint};
 
     spdlog::info("Listen on {}:{}", endpoint.address().to_string(), endpoint.port());
@@ -38,7 +39,7 @@ asio::awaitable<void> tcpRemote(AEAD::Method method, std::string_view remotePort
 
         try {
             // establish an encrypted connection between ss-local and ss-remote
-            auto ec = std::make_shared<EncryptedConnection>(std::move(peer), AEAD::makeCiphers(method, key));
+            auto ec = std::make_shared<EncryptedConnection>(std::move(peer), method, key);
 
             // get target endpoint
             std::string host, port;
@@ -55,7 +56,7 @@ asio::awaitable<void> tcpRemote(AEAD::Method method, std::string_view remotePort
             // proxy
             asio::co_spawn(executor, ioCopy(c, ec), asio::detached);
             asio::co_spawn(executor, ioCopy(ec, c), asio::detached);
-        } catch (const AEAD::DecryptionError& e) {
+        } catch (const crypto::AEAD::DecryptionError& e) {
             spdlog::warn("{}: peer {}", e.what(), peerAddr);
         } catch (const std::system_error& e) {
             if (e.code() != asio::error::eof && e.code() != asio::error::operation_aborted) {
@@ -72,15 +73,15 @@ asio::awaitable<void> tcpRemote(AEAD::Method method, std::string_view remotePort
     }
 }
 
-asio::awaitable<void> tcpLocal(AEAD::Method method,
+asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
                                std::string_view remoteHost, std::string_view remotePort,
                                std::string_view localPort,
                                std::string_view password) {
     auto executor = co_await asio::this_coro::executor;
 
     // derive a key from password
-    std::vector<Byte> key(AEAD::getKeySize(method));
-    deriveKey(ConstBytesView{reinterpret_cast<const Byte*>(password.data()), password.size()}, key);
+    std::vector<std::uint8_t> key(crypto::AEAD::keySize(method));
+    crypto::deriveKey(std::span{reinterpret_cast<const std::uint8_t*>(password.data()), password.size()}, key);
 
     // resolve ss-remote server endpoint
     // TODO add timeout
@@ -91,7 +92,7 @@ asio::awaitable<void> tcpLocal(AEAD::Method method,
     spdlog::debug("Remote server: {}:{}", remoteEndpoint.address().to_string(), remoteEndpoint.port());
 
     // listen
-    asio::ip::tcp::endpoint localEndpoint{asio::ip::tcp::v4(), static_cast<u16>(std::stoul(localPort.data()))};
+    asio::ip::tcp::endpoint localEndpoint{asio::ip::tcp::v4(), static_cast<std::uint16_t>(std::stoul(localPort.data()))};
     Acceptor acceptor{executor, localEndpoint};
 
     spdlog::info("Listen on {}:{}", localEndpoint.address().to_string(), localEndpoint.port());
@@ -119,10 +120,10 @@ asio::awaitable<void> tcpLocal(AEAD::Method method,
             co_await remoteSocket.async_connect(remoteEndpoint);
 
             // establish an encrypted connection between ss-local and ss-remote
-            auto eC = std::make_shared<EncryptedConnection>(std::move(remoteSocket), AEAD::makeCiphers(method, key));
+            auto eC = std::make_shared<EncryptedConnection>(std::move(remoteSocket), method, key);
 
             // write target address
-            co_await eC->write(BytesView{reinterpret_cast<Byte*>(socks5Addr.data()), socks5Addr.size()});
+            co_await eC->write(std::span{reinterpret_cast<const std::uint8_t*>(socks5Addr.data()), socks5Addr.size()});
 
             // proxy
             asio::co_spawn(executor, ioCopy(c, eC), asio::detached);

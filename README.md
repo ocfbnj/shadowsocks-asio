@@ -84,7 +84,7 @@ shadowsocks-asio --Client -s ocfbnj.cn -p 5421 -l 1080 -k ocfbnj -m chacha20-iet
 ## Dependent libraries
 
 - [Asio](https://think-async.com/Asio/) is used to implement asynchronous logic in a synchronous manner.
-- [cryptopp](https://github.com/weidai11/cryptopp) is used for encryption and decryption.
+- [mbedtls](https://github.com/ARMmbed/mbedtls) is used for encryption and decryption.
 - [fmt](https://github.com/fmtlib/fmt) is used to format strings.
 - [spdlog](https://github.com/gabime/spdlog) is used for logging.
 
