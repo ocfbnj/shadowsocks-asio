@@ -5,8 +5,6 @@ project(shadowsocks-asio)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(BUILD_TEST "Build the test program" ON)
-
 ########### Conan Package Manager ###########################################################
 #############################################################################################
 
@@ -30,7 +28,6 @@ conan_cmake_configure(
         mbedtls/3.1.0
         fmt/8.1.1
         spdlog/1.9.2
-        gtest/cci.20210126
     GENERATORS
         cmake_find_package)
 
@@ -51,9 +48,6 @@ find_package(GTest)
 #############################################################################################
 ########### Conan Package Manager End #######################################################
 
-add_subdirectory(src)
 add_subdirectory(libs/crypto/src)
 
-if(BUILD_TEST)
-    add_subdirectory(test)
-endif()
+add_subdirectory(src)
