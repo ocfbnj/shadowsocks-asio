@@ -43,7 +43,6 @@ find_package(asio REQUIRED)
 find_package(MbedTLS REQUIRED)
 find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
-find_package(GTest)
 
 #############################################################################################
 ########### Conan Package Manager End #######################################################
