@@ -4,6 +4,12 @@ An unofficial shadowsocks implementation that can work with official shadowsocks
 
 This project uses Asio network library, as well as the Coroutine and Concept features of C++20 to implement a concurrent server which can protect your Internet traffic.
 
+## Features
+
+- [x] SOCKS5 CONNECT command
+- [x] [AEAD](https://shadowsocks.org/en/wiki/AEAD-Ciphers.html) ciphers
+- [x] Defend against [replay attacks](https://github.com/shadowsocks/shadowsocks-org/issues/44)
+
 ## Get Started
 
 ### Server

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 name="shadowsocks-asio"
-version="v0.0.4"
+version="v0.1.0"
 
 bin_file="/usr/local/bin/${name}"
 ss_remote_start_file="/etc/${name}/ss-remote.sh"
