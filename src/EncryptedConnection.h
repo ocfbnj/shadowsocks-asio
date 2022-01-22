@@ -4,6 +4,7 @@
 #include <array>
 #include <memory>
 #include <span>
+#include <stdexcept>
 #include <vector>
 
 #include <crypto/aead/AEAD.h>
@@ -14,6 +15,11 @@
 // and encrypts the data before sending it.
 class EncryptedConnection {
 public:
+    class DuplicateSalt : public std::runtime_error {
+    public:
+        using std::runtime_error::runtime_error;
+    };
+
     EncryptedConnection(TCPSocket s, crypto::AEAD::Method method, std::span<const std::uint8_t> key);
 
     asio::awaitable<std::size_t> read(std::span<std::uint8_t> buffer);

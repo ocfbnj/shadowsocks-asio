@@ -1,3 +1,6 @@
 [submodule "libs/crypto"]
 	path = libs/crypto
 	url = https://github.com/ocfbnj/crypto.git
+[submodule "libs/bloom"]
+	path = libs/bloom
+	url = https://github.com/ocfbnj/bloom.git

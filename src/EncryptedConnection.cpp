@@ -4,6 +4,7 @@
 #include <crypto/crypto.h>
 
 #include "EncryptedConnection.h"
+#include "ReplayProtection.h"
 #include "io.h"
 
 EncryptedConnection::EncryptedConnection(TCPSocket s, crypto::AEAD::Method method, std::span<const std::uint8_t> key)
@@ -17,10 +18,15 @@ EncryptedConnection::EncryptedConnection(TCPSocket s, crypto::AEAD::Method metho
 }
 
 asio::awaitable<std::size_t> EncryptedConnection::read(std::span<std::uint8_t> buffer) {
+    bool checkReplayAttack = false;
+
     // read salt
     if (inSalt.empty()) {
         inSalt.resize(saltSize());
         co_await readFull(conn, inSalt);
+
+        // need to check replay attack
+        checkReplayAttack = true;
     }
 
     if (remaining > 0) {
@@ -34,6 +40,17 @@ asio::awaitable<std::size_t> EncryptedConnection::read(std::span<std::uint8_t> b
     }
 
     std::size_t payloadSize = co_await readEncryptedPayload(buf);
+
+    // check replay attack
+    if (checkReplayAttack) {
+        auto& protection = ReplayProtection::get();
+        if (protection.contains(inSalt)) {
+            throw DuplicateSalt{"Duplicate salt received. Possible replay attack"};
+        } else {
+            protection.insert(inSalt);
+        }
+    }
+
     std::size_t n = std::min(payloadSize, buffer.size());
     std::copy_n(buf.begin(), n, buffer.begin());
 

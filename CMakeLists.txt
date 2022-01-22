@@ -48,5 +48,6 @@ find_package(spdlog REQUIRED)
 ########### Conan Package Manager End #######################################################
 
 add_subdirectory(libs/crypto/src)
+add_subdirectory(libs/bloom)
 
 add_subdirectory(src)
