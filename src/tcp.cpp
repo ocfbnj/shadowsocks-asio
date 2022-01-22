@@ -59,7 +59,7 @@ asio::awaitable<void> tcpRemote(crypto::AEAD::Method method, std::string_view re
         } catch (const crypto::AEAD::DecryptionError& e) {
             spdlog::warn("{}: peer {}", e.what(), peerAddr);
         } catch (const EncryptedConnection::DuplicateSalt& e) {
-            spdlog::warn("{}", e.what());
+            spdlog::warn("{}: peer {}", e.what(), peerAddr);
         } catch (const std::system_error& e) {
             if (e.code() != asio::error::eof && e.code() != asio::error::operation_aborted) {
                 spdlog::debug(e.what());
