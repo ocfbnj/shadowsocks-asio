@@ -44,6 +44,10 @@ asio::awaitable<void> tcpRemote(crypto::AEAD::Method method, std::string_view re
             // get target endpoint
             std::string host, port;
             co_await readTgtAddr(*ec, host, port);
+
+            spdlog::debug("Target address: {}:{}", host, port);
+
+            // resolve target endpoint
             Resolver r{executor};
             Resolver::results_type results = co_await r.async_resolve(host, port);
             const asio::ip::tcp::endpoint& endpoint = *results.begin();
@@ -110,12 +114,7 @@ asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
             std::string host, port;
             std::string socks5Addr = co_await handshake(*c, host, port);
 
-            // resolve target endpoint
-            Resolver r{executor};
-            Resolver::results_type results = co_await r.async_resolve(host, port);
-            const asio::ip::tcp::endpoint& targetEndpoint = *results.begin();
-
-            spdlog::debug("Target address: {}:{}", targetEndpoint.address().to_string(), targetEndpoint.port());
+            spdlog::debug("Target address: {}:{}", host, port);
 
             // connect to ss-remote server
             TCPSocket remoteSocket{executor};
