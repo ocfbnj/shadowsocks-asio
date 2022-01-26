@@ -58,24 +58,25 @@ asio::awaitable<void> tcpRemote(crypto::AEAD::Method method, std::string_view re
             auto c = std::make_shared<Connection>(std::move(socket));
 
             // proxy
-            asio::co_spawn(executor, ioCopy(c, ec), asio::detached);
-            asio::co_spawn(executor, ioCopy(ec, c), asio::detached);
+            auto strand = asio::make_strand(executor);
+            asio::co_spawn(strand, ioCopy(c, ec), asio::detached);
+            asio::co_spawn(strand, ioCopy(ec, c), asio::detached);
         } catch (const crypto::AEAD::DecryptionError& e) {
             spdlog::warn("{}: peer {}", e.what(), peerAddr);
         } catch (const EncryptedConnection::DuplicateSalt& e) {
             spdlog::warn("{}: peer {}", e.what(), peerAddr);
         } catch (const std::system_error& e) {
-            if (e.code() != asio::error::eof && e.code() != asio::error::operation_aborted) {
-                spdlog::debug(e.what());
+            if (e.code() != asio::error::eof && e.code() != asio::error::timed_out) {
+                spdlog::debug("{}: peer {}", e.what(), peerAddr);
             }
         } catch (const std::exception& e) {
-            spdlog::warn(e.what());
+            spdlog::warn("{}: peer {}", e.what(), peerAddr);
         }
     };
 
     while (true) {
         TCPSocket peer = co_await acceptor.async_accept();
-        asio::co_spawn(asio::make_strand(executor), serveSocket(std::move(peer)), asio::detached);
+        asio::co_spawn(executor, serveSocket(std::move(peer)), asio::detached);
     }
 }
 
@@ -127,21 +128,22 @@ asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
             co_await eC->write(std::span{reinterpret_cast<const std::uint8_t*>(socks5Addr.data()), socks5Addr.size()});
 
             // proxy
-            asio::co_spawn(executor, ioCopy(c, eC), asio::detached);
-            asio::co_spawn(executor, ioCopy(eC, c), asio::detached);
+            auto strand = asio::make_strand(executor);
+            asio::co_spawn(strand, ioCopy(c, eC), asio::detached);
+            asio::co_spawn(strand, ioCopy(eC, c), asio::detached);
         } catch (const HandShakeError& e) {
-            spdlog::warn(e.what());
+            spdlog::warn("{}", e.what());
         } catch (const std::system_error& e) {
-            if (e.code() != asio::error::eof && e.code() != asio::error::operation_aborted) {
-                spdlog::debug(e.what());
+            if (e.code() != asio::error::eof && e.code() != asio::error::timed_out) {
+                spdlog::debug("{}", e.what());
             }
         } catch (const std::exception& e) {
-            spdlog::warn(e.what());
+            spdlog::warn("{}", e.what());
         }
     };
 
     while (true) {
         TCPSocket peer = co_await acceptor.async_accept();
-        asio::co_spawn(asio::make_strand(executor), serveSocket(std::move(peer)), asio::detached);
+        asio::co_spawn(executor, serveSocket(std::move(peer)), asio::detached);
     }
 }

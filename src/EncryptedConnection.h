@@ -24,7 +24,6 @@ public:
 
     asio::awaitable<std::size_t> read(std::span<std::uint8_t> buffer);
     asio::awaitable<std::size_t> write(std::span<const std::uint8_t> buffer);
-    void close();
 
 private:
     static constexpr std::size_t MaximumPayloadSize = 0x3FFF;

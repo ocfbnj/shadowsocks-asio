@@ -21,19 +21,11 @@ concept Writer = requires(T w, std::span<const std::uint8_t> buf) {
 };
 
 template <typename T>
-concept Closer = requires(T c) {
-    { c.close() } -> std::same_as<void>;
-};
-
-template <typename T>
 concept ReadWriter = Reader<T> && Writer<T>;
-
-template <typename T>
-concept ReadWriteCloser = Reader<T> && Writer<T> && Closer<T>;
 
 constexpr auto BufferSize = 32768;
 
-template <ReadWriteCloser W, ReadWriteCloser R>
+template <ReadWriter W, ReadWriter R>
 asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
     std::array<std::uint8_t, BufferSize> buf;
 
@@ -43,11 +35,8 @@ asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
             co_await w->write(std::span{buf.data(), size});
         }
     } catch (const std::system_error& e) {
-        r->close();
-        w->close();
-
-        if (e.code() != asio::error::eof && e.code() != asio::error::operation_aborted) {
-            spdlog::debug(e.what());
+        if (e.code() != asio::error::eof && e.code() != asio::error::timed_out) {
+            spdlog::debug("{}", e.what());
         }
     }
 }
