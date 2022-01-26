@@ -41,12 +41,11 @@ void Connection::setReadTimeout(int val) {
 }
 
 void Connection::updateTimer() {
+    std::error_code ignoreError;
+    timer.cancel(ignoreError);
+    timerErr.reset();
+
     if (timeout > 0) {
-        std::error_code ignoreError;
-        timer.cancel(ignoreError);
-
-        timerErr.reset();
-
         timer.expires_after(std::chrono::seconds(timeout));
         timer.async_wait([this](const std::error_code& error) {
             if (error != asio::error::operation_aborted) {

@@ -42,8 +42,10 @@ asio::awaitable<void> tcpRemote(crypto::AEAD::Method method, std::string_view re
             auto ec = std::make_shared<EncryptedConnection>(std::move(peer), method, key);
 
             // get target endpoint
+            ec->setReadTimeout(120); // 2 minutes
             std::string host, port;
             co_await readTgtAddr(*ec, host, port);
+            ec->setReadTimeout(0); // disable read timeout
 
             spdlog::debug("Target address: {}:{}", host, port);
 
