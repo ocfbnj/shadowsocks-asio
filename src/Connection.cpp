@@ -8,25 +8,14 @@
 Connection::Connection(TCPSocket s) : socket(std::move(s)), timer(socket.get_executor()) {}
 
 asio::awaitable<std::size_t> Connection::read(std::span<std::uint8_t> buffer) {
-    std::error_code ignoreError;
-
-    timer.cancel(ignoreError);
-    timerErr.reset();
-    timer.expires_after(std::chrono::seconds(timeout));
-    timer.async_wait([this](const std::error_code& error) {
-        if (error != asio::error::operation_aborted) {
-            timerErr = error;
-            std::error_code ignore;
-            socket.cancel(ignore);
-        }
-    });
+    updateTimer();
 
     std::size_t size = 0;
 
     try {
         size = co_await socket.async_read_some(asio::buffer(buffer.data(), buffer.size()));
     } catch (const std::system_error& e) {
-        if (timerErr.has_value()) {
+        if (timeout > 0 && timerErr.has_value()) {
             throw std::system_error{asio::error::timed_out, "Read timeout"};
         } else {
             throw std::system_error{e};
@@ -39,4 +28,32 @@ asio::awaitable<std::size_t> Connection::read(std::span<std::uint8_t> buffer) {
 asio::awaitable<std::size_t> Connection::write(std::span<const std::uint8_t> buffer) {
     std::size_t size = co_await asio::async_write(socket, asio::buffer(buffer.data(), buffer.size()));
     co_return size;
+}
+
+void Connection::close() {
+    std::error_code ignoreError;
+    socket.shutdown(asio::ip::tcp::socket::shutdown_send, ignoreError);
+}
+
+void Connection::setReadTimeout(int val) {
+    timeout = val;
+    updateTimer();
+}
+
+void Connection::updateTimer() {
+    if (timeout > 0) {
+        std::error_code ignoreError;
+        timer.cancel(ignoreError);
+
+        timerErr.reset();
+
+        timer.expires_after(std::chrono::seconds(timeout));
+        timer.async_wait([this](const std::error_code& error) {
+            if (error != asio::error::operation_aborted) {
+                timerErr = error;
+                std::error_code ignore;
+                socket.cancel(ignore);
+            }
+        });
+    }
 }

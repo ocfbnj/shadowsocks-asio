@@ -18,11 +18,17 @@ public:
     asio::awaitable<std::size_t> read(std::span<std::uint8_t> buffer);
     asio::awaitable<std::size_t> write(std::span<const std::uint8_t> buffer);
 
+    void close();
+
+    void setReadTimeout(int val);
+
 protected:
     TCPSocket socket;
 
 private:
-    int timeout = 5; // 5 seconds
+    void updateTimer();
+
+    int timeout = 0;
     asio::steady_timer timer;
     std::optional<std::error_code> timerErr;
 };

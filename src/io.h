@@ -21,11 +21,24 @@ concept Writer = requires(T w, std::span<const std::uint8_t> buf) {
 };
 
 template <typename T>
+concept Closer = requires(T c) {
+    { c.close() } -> std::same_as<void>;
+};
+
+template <typename T>
 concept ReadWriter = Reader<T> && Writer<T>;
+
+template <typename T>
+concept ReadWriterCloser = Reader<T> && Writer<T> && Closer<T>;
+
+template <typename T>
+concept Conn = ReadWriterCloser<T> && requires(T conn, int timeout) {
+    { conn.setReadTimeout(timeout) } -> std::same_as<void>;
+};
 
 constexpr auto BufferSize = 32768;
 
-template <ReadWriter W, ReadWriter R>
+template <Conn W, Conn R>
 asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
     std::array<std::uint8_t, BufferSize> buf;
 
@@ -35,6 +48,12 @@ asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
             co_await w->write(std::span{buf.data(), size});
         }
     } catch (const std::system_error& e) {
+        if (e.code() == asio::error::eof) {
+            w->close();
+        }
+
+        w->setReadTimeout(5); // 5 seconds
+
         if (e.code() != asio::error::eof && e.code() != asio::error::timed_out) {
             spdlog::debug("{}", e.what());
         }

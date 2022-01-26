@@ -73,6 +73,14 @@ asio::awaitable<std::size_t> EncryptedConnection::write(std::span<const std::uin
     co_return size;
 }
 
+void EncryptedConnection::close() {
+    conn.close();
+}
+
+void EncryptedConnection::setReadTimeout(int val) {
+    conn.setReadTimeout(val);
+}
+
 std::size_t EncryptedConnection::saltSize() const {
     switch (cipher.getMethod()) {
     case crypto::AEAD::ChaCha20Poly1305:
