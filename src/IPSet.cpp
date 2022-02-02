@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <cctype>
 #include <functional>
-#include <iostream>
 #include <optional>
 
 #include "IPSet.h"
