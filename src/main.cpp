@@ -9,11 +9,14 @@
 #include <asio/signal_set.hpp>
 #include <asio/ts/internet.hpp>
 #include <asio/ts/io_context.hpp>
+#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
 #include <crypto/aead/AEAD.h>
 
 #include "tcp.h"
+
+constexpr std::string_view Version = "v0.1.0";
 
 static bool remoteMode = true;
 
@@ -26,22 +29,31 @@ static std::string_view aclFilePath;
 static crypto::AEAD::Method method = crypto::AEAD::ChaCha20Poly1305;
 
 static void printUsage() {
-    std::cout << "Usage: \n"
-                 "    --Server                   Server mode. (Default)\n"
-                 "    --Client                   Client mode.\n"
-                 "\n"
-                 "    -s <server host>           Host name or IP address of your remote server.\n"
-                 "    -p <server port>           Port number of your remote server.\n"
-                 "    -l <local port>            Port number of your local server.\n"
-                 "    -k <password>              Password of your remote server.\n"
-                 "\n"
-                 "    -m <encrypt method>        Encrypt method:\n"
-                 "                               aes-128-gcm, aes-256-gcm,\n"
-                 "                               chacha20-ietf-poly1305 (Default).\n"
-                 "\n"
-                 "    --acl <file path>          Access Control List\n"
-                 "\n"
-                 "    -V                         Verbose mode.\n";
+    std::cout << fmt::format("shadowsocks-asio {}\n"
+                             "A lightweight shadowsocks implementation using Asio and C++20 Coroutines.\n"
+                             "\n"
+                             "USAGE: ./shadowsocks-asio [FLAGS] [OPTIONS]\n"
+                             "\n"
+                             "FLAGS:\n"
+                             "    --Server                   Server mode (Default)\n"
+                             "    --Client                   Client mode\n"
+                             "    -h, --help                 Print help information\n"
+                             "    -v, --version              Print version information\n"
+                             "    -V                         Verbose mode\n"
+                             "\n"
+                             "OPTIONS:\n"
+                             "    -s <server host>           Host name or IP address of your remote server\n"
+                             "    -p <server port>           Port number of your remote server\n"
+                             "    -l <local port>            Port number of your local server\n"
+                             "    -k <password>              Password of your remote server\n"
+                             "\n"
+                             "    -m <encrypt method>        Encrypt method:\n"
+                             "                               aes-128-gcm, aes-256-gcm,\n"
+                             "                               chacha20-ietf-poly1305 (Default)\n"
+                             "\n"
+                             "    --acl <file path>          Access control list\n"
+                             "\n",
+                             Version);
 }
 
 static crypto::AEAD::Method pickCipher(std::string_view method) {
@@ -64,6 +76,9 @@ int main(int argc, char* argv[]) {
 
         if (!strcmp("--help", argv[i]) || !strcmp("-h", argv[i])) {
             printUsage();
+            return 0;
+        } else if (!strcmp("--version", argv[i]) || !strcmp("-v", argv[i])) {
+            std::cout << Version << "\n";
             return 0;
         } else if (!strcmp("--Client", argv[i])) {
             remoteMode = false;
