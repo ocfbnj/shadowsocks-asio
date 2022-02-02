@@ -21,6 +21,7 @@ static std::string_view remoteHost;
 static std::string_view remotePort;
 static std::string_view localPort;
 static std::string_view password;
+static std::string_view aclFilePath;
 
 static crypto::AEAD::Method method = crypto::AEAD::ChaCha20Poly1305;
 
@@ -37,6 +38,8 @@ static void printUsage() {
                  "    -m <encrypt method>        Encrypt method:\n"
                  "                               aes-128-gcm, aes-256-gcm,\n"
                  "                               chacha20-ietf-poly1305 (Default).\n"
+                 "\n"
+                 "    --acl <file path>          Access Control List\n"
                  "\n"
                  "    -V                         Verbose mode.\n";
 }
@@ -74,6 +77,8 @@ int main(int argc, char* argv[]) {
             password = argv[++i];
         } else if (!strcmp("-m", argv[i])) {
             method = pickCipher(argv[++i]);
+        } else if (!strcmp("--acl", argv[i])) {
+            aclFilePath = argv[++i];
         } else if (!strcmp("-V", argv[i])) {
             spdlog::set_level(spdlog::level::debug);
         }
@@ -100,7 +105,11 @@ int main(int argc, char* argv[]) {
             return 0;
         }
 
-        asio::co_spawn(ctx, tcpLocal(method, remoteHost, remotePort, localPort, password), asio::detached);
+        std::optional<std::string> acl;
+        if (!aclFilePath.empty()) {
+            acl = aclFilePath;
+        }
+        asio::co_spawn(ctx, tcpLocal(method, remoteHost, remotePort, localPort, password, acl), asio::detached);
     }
 
     asio::signal_set signals(ctx, SIGINT, SIGTERM);

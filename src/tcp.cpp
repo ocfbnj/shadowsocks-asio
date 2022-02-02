@@ -1,6 +1,7 @@
 // This file implements ss-local and ss-remote
 // See https://shadowsocks.org/en/wiki/Protocol.html
 
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -14,9 +15,51 @@
 
 #include "AsyncObject.h"
 #include "EncryptedConnection.h"
+#include "IPSet.h"
 #include "io.h"
 #include "socks5.h"
 #include "tcp.h"
+
+namespace {
+void trim(std::string& str) {
+    str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](char c) { return !std::isspace(c); }));
+    str.erase(std::find_if(str.rbegin(), str.rend(), [](char c) { return !std::isspace(c); }).base(), str.end());
+}
+
+std::vector<std::string> getBypassList(std::string_view path) {
+    std::ifstream ifs{path.data(), std::ifstream::in | std::ifstream::binary};
+    if (!ifs) {
+        throw std::runtime_error{fmt::format("Cannot open acl file: {}", path)};
+    }
+
+    std::vector<std::string> res;
+    std::string line;
+    bool start = false;
+
+    while (std::getline(ifs, line)) {
+        trim(line);
+
+        if (line.empty()) {
+            continue;
+        }
+
+        if (line == "[bypass_list]") {
+            start = true;
+            continue;
+        }
+
+        if (start == true && line[0] == '[') {
+            break;
+        }
+
+        if (start) {
+            res.emplace_back(std::move(line));
+        }
+    }
+
+    return res;
+}
+} // namespace
 
 asio::awaitable<void> tcpRemote(crypto::AEAD::Method method, std::string_view remotePort, std::string_view password) {
     auto executor = co_await asio::this_coro::executor;
@@ -85,12 +128,20 @@ asio::awaitable<void> tcpRemote(crypto::AEAD::Method method, std::string_view re
 asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
                                std::string_view remoteHost, std::string_view remotePort,
                                std::string_view localPort,
-                               std::string_view password) {
+                               std::string_view password,
+                               std::optional<std::string> aclFilePath) {
     auto executor = co_await asio::this_coro::executor;
 
     // derive a key from password
     std::vector<std::uint8_t> key(crypto::AEAD::keySize(method));
     crypto::deriveKey(std::span{reinterpret_cast<const std::uint8_t*>(password.data()), password.size()}, key);
+
+    // parse bypass list
+    IPSet bypassList;
+    if (aclFilePath.has_value()) {
+        std::vector<std::string> list = getBypassList(aclFilePath.value());
+        std::for_each(list.begin(), list.end(), [&bypassList](const std::string& elem) { bypassList.insert(elem); });
+    }
 
     // resolve ss-remote server endpoint
     // TODO add timeout
@@ -106,7 +157,7 @@ asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
 
     spdlog::info("Listen on {}:{}", localEndpoint.address().to_string(), localEndpoint.port());
 
-    auto serveSocket = [&method, &key, &remoteEndpoint](TCPSocket peer) -> asio::awaitable<void> {
+    auto serveSocket = [&method, &key, &remoteEndpoint, &bypassList](TCPSocket peer) -> asio::awaitable<void> {
         auto executor = co_await asio::this_coro::executor;
 
         try {
@@ -117,22 +168,44 @@ asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
             std::string host, port;
             std::string socks5Addr = co_await handshake(*c, host, port);
 
-            spdlog::debug("Target address: {}:{}", host, port);
+            // parse host
+            Resolver resolver{executor};
+            Resolver::results_type results = co_await resolver.async_resolve(host, port);
+            const asio::ip::tcp::endpoint& targetEndpoint = *results.begin();
+            std::string ip = targetEndpoint.address().to_string();
 
-            // connect to ss-remote server
-            TCPSocket remoteSocket{executor};
-            co_await remoteSocket.async_connect(remoteEndpoint);
+            if (!bypassList.contains(ip)) {
+                spdlog::debug("Proxy target address: {}:{}", host, port);
 
-            // establish an encrypted connection between ss-local and ss-remote
-            auto eC = std::make_shared<EncryptedConnection>(std::move(remoteSocket), method, key);
+                // connect to ss-remote server
+                TCPSocket remoteSocket{executor};
+                co_await remoteSocket.async_connect(remoteEndpoint);
 
-            // write target address
-            co_await eC->write(std::span{reinterpret_cast<const std::uint8_t*>(socks5Addr.data()), socks5Addr.size()});
+                // establish an encrypted connection between ss-local and ss-remote
+                auto eC = std::make_shared<EncryptedConnection>(std::move(remoteSocket), method, key);
 
-            // proxy
-            auto strand = asio::make_strand(executor);
-            asio::co_spawn(strand, ioCopy(c, eC), asio::detached);
-            asio::co_spawn(strand, ioCopy(eC, c), asio::detached);
+                // write target address
+                co_await eC->write(std::span{reinterpret_cast<const std::uint8_t*>(socks5Addr.data()), socks5Addr.size()});
+
+                // proxy
+                auto strand = asio::make_strand(executor);
+                asio::co_spawn(strand, ioCopy(c, eC), asio::detached);
+                asio::co_spawn(strand, ioCopy(eC, c), asio::detached);
+            } else {
+                spdlog::debug("Bypass target address: {}:{}", host, port);
+
+                // connect to target host
+                TCPSocket targetSocket{executor};
+                co_await targetSocket.async_connect(targetEndpoint);
+
+                // establish a normal connection between ss-local and ss-remote
+                auto conn = std::make_shared<Connection>(std::move(targetSocket));
+
+                // proxy
+                auto strand = asio::make_strand(executor);
+                asio::co_spawn(strand, ioCopy(c, conn), asio::detached);
+                asio::co_spawn(strand, ioCopy(conn, c), asio::detached);
+            }
         } catch (const HandShakeError& e) {
             spdlog::warn("{}", e.what());
         } catch (const std::system_error& e) {
