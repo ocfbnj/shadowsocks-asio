@@ -1,5 +1,7 @@
 # shadowsocks-asio
 
+[![CI](https://github.com/ocfbnj/shadowsocks-asio/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ocfbnj/shadowsocks-asio/actions/workflows/ci.yml)
+
 An unofficial shadowsocks implementation that can work with official shadowsocks.
 
 This project uses Asio network library, as well as the Coroutine and Concept features of C++20 to implement a concurrent server which can protect your Internet traffic.
@@ -92,12 +94,6 @@ shadowsocks-asio --Client -s ocfbnj.cn -p 5421 -l 1080 -k ocfbnj -m chacha20-iet
 - [mbedtls](https://github.com/ARMmbed/mbedtls) is used for encryption and decryption.
 - [fmt](https://github.com/fmtlib/fmt) is used to format strings.
 - [spdlog](https://github.com/gabime/spdlog) is used for logging.
-
-## Test on
-
-- GCC 10.3.0
-- MSVC 19.29
-- Apple Clang 12.0.5
 
 ## References
 
