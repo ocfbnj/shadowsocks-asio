@@ -17,10 +17,10 @@ jobs:
       - name: Init Git Submodule
         run: git submodule update --init --recursive
       - name: Install Linux Dependencies
-        run: sudo apt-get update && sudo apt-get upgrade && sudo apt-get install cmake ninja-build python3-pip
+        run: sudo apt-get update && sudo apt-get upgrade && sudo apt-get install g++-10 cmake ninja-build python3-pip
       - name: Install Conan Package Manager
         run: pip3 install conan -U && conan profile new default --detect && conan profile update settings.compiler.libcxx=libstdc++11 default
       - name: Configure CMake
-        run: cmake -DCMAKE_BUILD_TYPE=Release -S $GITHUB_WORKSPACE -B $GITHUB_WORKSPACE/build -G Ninja
+        run: cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=/usr/bin/gcc-10 -DCMAKE_CXX_COMPILER=/usr/bin/g++-10 -S $GITHUB_WORKSPACE -B $GITHUB_WORKSPACE/build -G Ninja
       - name: Build
         run: cmake --build $GITHUB_WORKSPACE/build
