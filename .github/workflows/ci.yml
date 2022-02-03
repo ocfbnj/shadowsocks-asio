@@ -29,12 +29,14 @@ jobs:
           submodules: true
       - name: Install GCC 10
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get upgrade && sudo apt-get install g++-10
+        run: sudo apt-get update && sudo apt-get install g++-10
       - name: Setup Python
         uses: actions/setup-python@v2.3.1
       - name: Install Conan Package Manager
         run: pip install conan -U
       - name: Configure CMake
+        shell: bash
         run: cmake -DCMAKE_BUILD_TYPE=Release -S $GITHUB_WORKSPACE -B $GITHUB_WORKSPACE/build ${{matrix.platform.flags}}
       - name: Build
+        shell: bash
         run: cmake --build $GITHUB_WORKSPACE/build --config Release
