@@ -14,6 +14,7 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
+      - name: Init Git Submodule
         run: git submodule update --init --recursive
       - name: Install Linux Dependencies
         run: sudo apt-get update && sudo apt-get upgrade && sudo apt-get install cmake ninja-build python3-pip
