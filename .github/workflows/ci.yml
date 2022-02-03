@@ -1,21 +1,20 @@
-name: C/C++ CI
+name: C++ CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: install linux dependencies
-      run: sudo apt update && sudo apt upgrade && apt install ninja-build && apt install python3-pip
-    - name: install conan
-      run: pip3 install conan -U && conan profile new default --detect && conan profile update settings.compiler.libcxx=libstdc++11 default
-    - name: build release
-      run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && cmake --build .
+      - uses: actions/checkout@v2
+      - name: install linux dependencies
+        run: sudo apt-get update && sudo apt-get upgrade && sudo apt-get install cmake ninja-build python3-pip
+      - name: install conan
+        run: pip3 install conan -U && conan profile new default --detect && conan profile update settings.compiler.libcxx=libstdc++11 default
+      - name: build release
+        run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && cmake --build .
