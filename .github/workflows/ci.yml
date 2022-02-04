@@ -40,3 +40,10 @@ jobs:
       - name: Build
         shell: bash
         run: cmake --build $GITHUB_WORKSPACE/build --config Release
+      - name: Compress
+        run: tar -czf $GITHUB_WORKSPACE/build/src/shadowsocks-asio.tar.gz $GITHUB_WORKSPACE/build/src/shadowsocks-asio
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v2.3.1
+        with:
+          name: ${{ matrix.platform.name }}
+          path: $GITHUB_WORKSPACE/build/src/shadowsocks-asio.tar.gz
