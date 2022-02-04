@@ -36,14 +36,15 @@ jobs:
         run: pip install conan -U
       - name: Configure CMake
         shell: bash
-        run: cmake -DCMAKE_BUILD_TYPE=Release -S $GITHUB_WORKSPACE -B $GITHUB_WORKSPACE/build ${{matrix.platform.flags}}
+        run: cmake -DCMAKE_BUILD_TYPE=Release -S . -B ./build ${{matrix.platform.flags}}
       - name: Build
         shell: bash
-        run: cmake --build $GITHUB_WORKSPACE/build --config Release
+        run: cmake --build ./build --config Release
       - name: Compress
-        run: tar -czf $GITHUB_WORKSPACE/build/src/shadowsocks-asio.tar.gz $GITHUB_WORKSPACE/build/src/shadowsocks-asio
+        shell: bash
+        run: tar -czf ./build/src/shadowsocks-asio.tar.gz ./build/src/shadowsocks-asio
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v2.3.1
         with:
           name: ${{ matrix.platform.name }}
-          path: $GITHUB_WORKSPACE/build/src/shadowsocks-asio.tar.gz
+          path: ./build/src/shadowsocks-asio.tar.gz
