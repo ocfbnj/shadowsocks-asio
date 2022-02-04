@@ -9,8 +9,8 @@ public:
     IPSet() = default;
     IPSet(const IPSet&) = delete;
     IPSet& operator=(const IPSet&) = delete;
-    IPSet(IPSet&&) = default;
-    IPSet& operator=(IPSet&&) = default;
+    IPSet(IPSet&& other);
+    IPSet& operator=(IPSet&& other);
     ~IPSet();
 
     /**
@@ -26,7 +26,7 @@ public:
      * @par Example
      * @code
      * IPset set;
-     * set.insert(0x123400, 16);
+     * set.insert(0x12340000, 16);
      * @endcode
      */
     void insert(std::uint32_t ip, std::uint8_t bits);
@@ -39,7 +39,7 @@ public:
      * set.contains("192.168.0.1"); // return true
      * @endcode
      */
-    bool contains(const std::string& ip);
+    bool contains(const std::string& ip) const;
 
     /**
      * @brief clear the IPSet

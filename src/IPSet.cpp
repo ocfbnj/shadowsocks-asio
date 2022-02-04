@@ -30,6 +30,23 @@ std::optional<std::uint32_t> parse_ip_address(const std::string& ip) {
 }
 } // namespace
 
+IPSet::IPSet(IPSet&& other) : root(other.root) {
+    other.root.left = nullptr;
+    other.root.right = nullptr;
+}
+
+IPSet& IPSet::operator=(IPSet&& other) {
+    if (&other == this) {
+        return *this;
+    }
+
+    root = other.root;
+    other.root.left = nullptr;
+    other.root.right = nullptr;
+
+    return *this;
+}
+
 IPSet::~IPSet() {
     clear();
 }
@@ -80,14 +97,14 @@ void IPSet::insert(std::uint32_t ip, std::uint8_t bits) {
     }
 }
 
-bool IPSet::contains(const std::string& ip) {
+bool IPSet::contains(const std::string& ip) const {
     std::optional<std::uint32_t> addr = parse_ip_address(ip);
     if (!addr.has_value()) {
         return false;
     }
 
     std::uint32_t addr_value = addr.value();
-    TrieNode* node = &root;
+    const TrieNode* node = &root;
 
     for (std::uint8_t i = 0; i != 32; i++) {
         std::uint8_t bit = (addr_value >> (31 - i)) & 1;

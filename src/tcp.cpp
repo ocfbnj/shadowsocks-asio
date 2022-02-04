@@ -1,7 +1,6 @@
 // This file implements ss-local and ss-remote
 // See https://shadowsocks.org/en/wiki/Protocol.html
 
-#include <fstream>
 #include <string>
 #include <vector>
 
@@ -13,53 +12,13 @@
 
 #include <crypto/crypto.h>
 
+#include "ACL.h"
 #include "AsyncObject.h"
 #include "EncryptedConnection.h"
 #include "IPSet.h"
 #include "io.h"
 #include "socks5.h"
 #include "tcp.h"
-
-namespace {
-void trim(std::string& str) {
-    str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](char c) { return !std::isspace(c); }));
-    str.erase(std::find_if(str.rbegin(), str.rend(), [](char c) { return !std::isspace(c); }).base(), str.end());
-}
-
-std::vector<std::string> getBypassList(std::string_view path) {
-    std::ifstream ifs{path.data(), std::ifstream::in | std::ifstream::binary};
-    if (!ifs) {
-        throw std::runtime_error{fmt::format("Cannot open acl file: {}", path)};
-    }
-
-    std::vector<std::string> res;
-    std::string line;
-    bool start = false;
-
-    while (std::getline(ifs, line)) {
-        trim(line);
-
-        if (line.empty()) {
-            continue;
-        }
-
-        if (line == "[bypass_list]") {
-            start = true;
-            continue;
-        }
-
-        if (start == true && line[0] == '[') {
-            break;
-        }
-
-        if (start) {
-            res.emplace_back(std::move(line));
-        }
-    }
-
-    return res;
-}
-} // namespace
 
 asio::awaitable<void> tcpRemote(crypto::AEAD::Method method, std::string_view remotePort, std::string_view password) {
     auto executor = co_await asio::this_coro::executor;
@@ -136,11 +95,9 @@ asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
     std::vector<std::uint8_t> key(crypto::AEAD::keySize(method));
     crypto::deriveKey(std::span{reinterpret_cast<const std::uint8_t*>(password.data()), password.size()}, key);
 
-    // parse bypass list
-    IPSet bypassList;
+    ACL acl;
     if (aclFilePath.has_value()) {
-        std::vector<std::string> list = getBypassList(aclFilePath.value());
-        std::for_each(list.begin(), list.end(), [&bypassList](const std::string& elem) { bypassList.insert(elem); });
+        acl = ACL::fromFile(aclFilePath.value());
     }
 
     // resolve ss-remote server endpoint
@@ -157,7 +114,7 @@ asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
 
     spdlog::info("Listen on {}:{}", localEndpoint.address().to_string(), localEndpoint.port());
 
-    auto serveSocket = [&method, &key, &remoteEndpoint, &bypassList](TCPSocket peer) -> asio::awaitable<void> {
+    auto serveSocket = [&method, &key, &remoteEndpoint, &acl](TCPSocket peer) -> asio::awaitable<void> {
         auto executor = co_await asio::this_coro::executor;
 
         try {
@@ -174,7 +131,7 @@ asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
             const asio::ip::tcp::endpoint& targetEndpoint = *results.begin();
             std::string ip = targetEndpoint.address().to_string();
 
-            if (!bypassList.contains(ip)) {
+            if (!acl.is_bypass(ip)) {
                 spdlog::debug("Proxy target address: {}:{}", host, port);
 
                 // connect to ss-remote server

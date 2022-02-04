@@ -11,6 +11,7 @@ This project uses Asio network library, as well as the Coroutine and Concept fea
 - [x] SOCKS5 CONNECT command
 - [x] [AEAD](https://shadowsocks.org/en/wiki/AEAD-Ciphers.html) ciphers
 - [x] Defend against [replay attacks](https://github.com/shadowsocks/shadowsocks-org/issues/44)
+- [x] [ACL](https://github.com/shadowsocks/shadowsocks-rust#acl)(Client and IPv4 only)
 
 ## Get Started
 
