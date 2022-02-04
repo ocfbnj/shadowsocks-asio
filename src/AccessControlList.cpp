@@ -24,7 +24,7 @@ AccessControlList AccessControlList::fromFile(const std::string& path) {
     IPSet* cur_list = &acl.bypass_list;
 
     std::string line;
-    while (ifs >> line) {
+    while (std::getline(ifs, line)) {
         line.erase(std::find(line.begin(), line.end(), '#'), line.end());
         trim(line);
 
