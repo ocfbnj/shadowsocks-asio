@@ -12,7 +12,7 @@
 
 #include <crypto/crypto.h>
 
-#include "ACL.h"
+#include "AccessControlList.h"
 #include "AsyncObject.h"
 #include "EncryptedConnection.h"
 #include "IPSet.h"
@@ -95,9 +95,9 @@ asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
     std::vector<std::uint8_t> key(crypto::AEAD::keySize(method));
     crypto::deriveKey(std::span{reinterpret_cast<const std::uint8_t*>(password.data()), password.size()}, key);
 
-    ACL acl;
+    AccessControlList acl;
     if (aclFilePath.has_value()) {
-        acl = ACL::fromFile(aclFilePath.value());
+        acl = AccessControlList::fromFile(aclFilePath.value());
     }
 
     // resolve ss-remote server endpoint

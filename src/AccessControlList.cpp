@@ -4,7 +4,7 @@
 
 #include <fmt/format.h>
 
-#include "ACL.h"
+#include "AccessControlList.h"
 
 namespace {
 void trim(std::string& str) {
@@ -13,8 +13,8 @@ void trim(std::string& str) {
 }
 } // namespace
 
-ACL ACL::fromFile(const std::string& path) {
-    ACL acl;
+AccessControlList AccessControlList::fromFile(const std::string& path) {
+    AccessControlList acl;
 
     std::ifstream ifs{path.data(), std::ifstream::in | std::ifstream::binary};
     if (!ifs) {
@@ -48,7 +48,7 @@ ACL ACL::fromFile(const std::string& path) {
     return acl;
 }
 
-bool ACL::is_bypass(const std::string& ip) const {
+bool AccessControlList::is_bypass(const std::string& ip) const {
     if (bypass_list.contains(ip)) {
         return true;
     }

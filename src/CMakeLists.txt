@@ -1,6 +1,6 @@
 add_executable(
     ${CMAKE_PROJECT_NAME}
-    ACL.cpp
+    AccessControlList.cpp
     Connection.cpp
     EncryptedConnection.cpp
     IPSet.cpp
