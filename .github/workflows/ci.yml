@@ -40,11 +40,8 @@ jobs:
       - name: Build
         shell: bash
         run: cmake --build ./build --config Release
-      - name: Compress
-        shell: bash
-        run: tar -czf ./build/src/shadowsocks-asio.tar.gz ./build/src/shadowsocks-asio
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v2.3.1
         with:
           name: ${{ matrix.platform.name }}
-          path: ./build/src/shadowsocks-asio.tar.gz
+          path: ./build/src/shadowsocks-asio
