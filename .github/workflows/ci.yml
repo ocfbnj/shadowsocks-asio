@@ -44,4 +44,4 @@ jobs:
         uses: actions/upload-artifact@v2.3.1
         with:
           name: ${{ matrix.platform.name }}
-          path: ./build/src/shadowsocks-asio
+          path: build/src/shadowsocks-asio
