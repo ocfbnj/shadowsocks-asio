@@ -10,7 +10,9 @@ add_executable(
     tcp.cpp)
 
 if(UNIX AND NOT APPLE)
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -fcoroutines)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -fcoroutines)
+    endif()
 endif()
 
 if(MSVC)
