@@ -20,7 +20,17 @@ jobs:
               os: ubuntu-latest,
               flags: -DCMAKE_C_COMPILER=gcc-10 -DCMAKE_CXX_COMPILER=g++-10,
             }
+          - {
+              name: Linux Clang,
+              os: ubuntu-latest,
+              flags: -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++,
+            }
           - { name: MacOS Apple Clang, os: macos-latest }
+          - {
+              name: MacOS GCC,
+              os: macos-latest,
+              flags: -DCMAKE_C_COMPILER=gcc-11 -DCMAKE_CXX_COMPILER=g++-11,
+            }
 
     steps:
       - name: Checkout Code
