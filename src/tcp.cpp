@@ -13,9 +13,9 @@
 #include <crypto/crypto.h>
 
 #include "AccessControlList.h"
-#include "AsyncObject.h"
 #include "EncryptedConnection.h"
-#include "IPSet.h"
+#include "IpSet.h"
+#include "awaitable.h"
 #include "io.h"
 #include "socks5.h"
 #include "tcp.h"
@@ -29,11 +29,11 @@ asio::awaitable<void> tcpRemote(crypto::AEAD::Method method, std::string_view re
 
     // listen
     asio::ip::tcp::endpoint endpoint{asio::ip::tcp::v4(), static_cast<std::uint16_t>(std::stoul(remotePort.data()))};
-    Acceptor acceptor{executor, endpoint};
+    TcpAcceptor acceptor{executor, endpoint};
 
     spdlog::info("Listen on {}:{}", endpoint.address().to_string(), endpoint.port());
 
-    auto serveSocket = [&method, &key](TCPSocket peer) -> asio::awaitable<void> {
+    auto serveSocket = [&method, &key](TcpSocket peer) -> asio::awaitable<void> {
         auto executor = co_await asio::this_coro::executor;
 
         asio::ip::tcp::endpoint endpoint = peer.remote_endpoint();
@@ -52,12 +52,12 @@ asio::awaitable<void> tcpRemote(crypto::AEAD::Method method, std::string_view re
             spdlog::debug("Target address: {}:{}", host, port);
 
             // resolve target endpoint
-            Resolver r{executor};
-            Resolver::results_type results = co_await r.async_resolve(host, port);
+            TcpResolver r{executor};
+            TcpResolver::results_type results = co_await r.async_resolve(host, port);
             const asio::ip::tcp::endpoint& endpoint = *results.begin();
 
             // connect to target host
-            TCPSocket socket{executor};
+            TcpSocket socket{executor};
             co_await socket.async_connect(endpoint);
             auto c = std::make_shared<Connection>(std::move(socket));
 
@@ -79,7 +79,7 @@ asio::awaitable<void> tcpRemote(crypto::AEAD::Method method, std::string_view re
     };
 
     while (true) {
-        TCPSocket peer = co_await acceptor.async_accept();
+        TcpSocket peer = co_await acceptor.async_accept();
         asio::co_spawn(executor, serveSocket(std::move(peer)), asio::detached);
     }
 }
@@ -102,19 +102,19 @@ asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
 
     // resolve ss-remote server endpoint
     // TODO add timeout
-    Resolver resolver{executor};
-    Resolver::results_type results = co_await resolver.async_resolve(remoteHost.data(), remotePort.data());
+    TcpResolver resolver{executor};
+    TcpResolver::results_type results = co_await resolver.async_resolve(remoteHost.data(), remotePort.data());
     const asio::ip::tcp::endpoint& remoteEndpoint = *results.begin();
 
     spdlog::debug("Remote server: {}:{}", remoteEndpoint.address().to_string(), remoteEndpoint.port());
 
     // listen
     asio::ip::tcp::endpoint localEndpoint{asio::ip::tcp::v4(), static_cast<std::uint16_t>(std::stoul(localPort.data()))};
-    Acceptor acceptor{executor, localEndpoint};
+    TcpAcceptor acceptor{executor, localEndpoint};
 
     spdlog::info("Listen on {}:{}", localEndpoint.address().to_string(), localEndpoint.port());
 
-    auto serveSocket = [&method, &key, &remoteEndpoint, &acl](TCPSocket peer) -> asio::awaitable<void> {
+    auto serveSocket = [&method, &key, &remoteEndpoint, &acl](TcpSocket peer) -> asio::awaitable<void> {
         auto executor = co_await asio::this_coro::executor;
 
         try {
@@ -126,16 +126,16 @@ asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
             std::string socks5Addr = co_await handshake(*c, host, port);
 
             // parse host
-            Resolver resolver{executor};
-            Resolver::results_type results = co_await resolver.async_resolve(host, port);
+            TcpResolver resolver{executor};
+            TcpResolver::results_type results = co_await resolver.async_resolve(host, port);
             const asio::ip::tcp::endpoint& targetEndpoint = *results.begin();
             std::string ip = targetEndpoint.address().to_string();
 
-            if (!acl.is_bypass(ip)) {
+            if (!acl.isBypass(ip)) {
                 spdlog::debug("Proxy target address: {}:{}", host, port);
 
                 // connect to ss-remote server
-                TCPSocket remoteSocket{executor};
+                TcpSocket remoteSocket{executor};
                 co_await remoteSocket.async_connect(remoteEndpoint);
 
                 // establish an encrypted connection between ss-local and ss-remote
@@ -152,7 +152,7 @@ asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
                 spdlog::debug("Bypass target address: {}:{}", host, port);
 
                 // connect to target host
-                TCPSocket targetSocket{executor};
+                TcpSocket targetSocket{executor};
                 co_await targetSocket.async_connect(targetEndpoint);
 
                 // establish a normal connection between ss-local and ss-remote
@@ -175,7 +175,7 @@ asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
     };
 
     while (true) {
-        TCPSocket peer = co_await acceptor.async_accept();
+        TcpSocket peer = co_await acceptor.async_accept();
         asio::co_spawn(executor, serveSocket(std::move(peer)), asio::detached);
     }
 }

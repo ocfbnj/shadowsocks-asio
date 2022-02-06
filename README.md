@@ -48,31 +48,19 @@ shadowsocks-asio --Client -s ocfbnj.cn -p 5421 -l 1080 -k ocfbnj -m chacha20-iet
     pip install conan -U
     ~~~
 
-    > Important: If you are using GCC compiler >= 5.1, Conan will set the compiler.libcxx to the old ABI for backwards compatibility.
-    >
-    > You can avoid this with the following commands:
-    >
-    > ~~~bash
-    > $ conan profile new default --detect
-    > $ conan profile update settings.compiler.libcxx=libstdc++11 default
-    > ~~~
-    >
-    > See <https://docs.conan.io/en/latest/howtos/manage_gcc_abi.html#manage-gcc-abi>
-
-2. Clone and install dependencies
+2. Clone
 
     ~~~bash
     git clone https://github.com/ocfbnj/shadowsocks-asio --recurse-submodules
     cd shadowsocks-asio
-    mkdir build
-    cd build
+    mkdir build && cd build
     ~~~
 
 3. Build
     - On Windows
 
         ~~~bash
-        cmake .. -G "Visual Studio 16"
+        cmake .. -DCMAKE_BUILD_TYPE=Release
         cmake --build . --config Release
         ~~~
 

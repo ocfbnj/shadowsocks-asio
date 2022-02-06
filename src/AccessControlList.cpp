@@ -7,7 +7,11 @@
 #include "AccessControlList.h"
 
 namespace {
-void trim(std::string& str) {
+void trimComment(std::string& str) {
+    str.erase(std::find(str.begin(), str.end(), '#'), str.end());
+}
+
+void trimSpace(std::string& str) {
     str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](char c) { return !std::isspace(c); }));
     str.erase(std::find_if(str.rbegin(), str.rend(), [](char c) { return !std::isspace(c); }).base(), str.end());
 }
@@ -21,12 +25,12 @@ AccessControlList AccessControlList::fromFile(const std::string& path) {
         throw std::runtime_error{fmt::format("Cannot open acl file: {}", path)};
     }
 
-    IPSet* cur_list = &acl.bypass_list;
+    IpSet* curList = &acl.bypassList;
 
     std::string line;
     while (std::getline(ifs, line)) {
-        line.erase(std::find(line.begin(), line.end(), '#'), line.end());
-        trim(line);
+        trimComment(line);
+        trimSpace(line);
 
         if (line.empty()) {
             continue;
@@ -37,23 +41,23 @@ AccessControlList AccessControlList::fromFile(const std::string& path) {
         } else if (line == "[bypass_all]") {
             acl.mode = BlackList;
         } else if (line == "[bypass_list]") {
-            cur_list = &acl.bypass_list;
+            curList = &acl.bypassList;
         } else if (line == "[proxy_list]") {
-            cur_list = &acl.proxy_list;
+            curList = &acl.proxyList;
         } else {
-            cur_list->insert(line);
+            curList->insert(line);
         }
     }
 
     return acl;
 }
 
-bool AccessControlList::is_bypass(const std::string& ip) const {
-    if (bypass_list.contains(ip)) {
+bool AccessControlList::isBypass(const std::string& ip) const {
+    if (bypassList.contains(ip)) {
         return true;
     }
 
-    if (proxy_list.contains(ip)) {
+    if (proxyList.contains(ip)) {
         return false;
     }
 

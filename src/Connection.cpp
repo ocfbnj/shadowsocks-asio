@@ -5,7 +5,7 @@
 
 #include "Connection.h"
 
-Connection::Connection(TCPSocket s) : socket(std::move(s)), timer(socket.get_executor()) {}
+Connection::Connection(TcpSocket s) : socket(std::move(s)), timer(socket.get_executor()) {}
 
 asio::awaitable<std::size_t> Connection::read(std::span<std::uint8_t> buffer) {
     updateTimer();

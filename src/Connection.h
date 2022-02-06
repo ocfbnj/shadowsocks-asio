@@ -8,12 +8,12 @@
 #include <asio/awaitable.hpp>
 #include <asio/ts/timer.hpp>
 
-#include "AsyncObject.h"
+#include "awaitable.h"
 
 // Connection encapsulates a socket for reading and writing.
 class Connection {
 public:
-    explicit Connection(TCPSocket s);
+    explicit Connection(TcpSocket s);
 
     asio::awaitable<std::size_t> read(std::span<std::uint8_t> buffer);
     asio::awaitable<std::size_t> write(std::span<const std::uint8_t> buffer);
@@ -23,7 +23,7 @@ public:
     void setReadTimeout(int val);
 
 protected:
-    TCPSocket socket;
+    TcpSocket socket;
 
 private:
     void updateTimer();

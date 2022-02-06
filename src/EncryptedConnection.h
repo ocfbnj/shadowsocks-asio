@@ -20,7 +20,7 @@ public:
         using std::runtime_error::runtime_error;
     };
 
-    EncryptedConnection(TCPSocket s, crypto::AEAD::Method method, std::span<const std::uint8_t> key);
+    EncryptedConnection(TcpSocket s, crypto::AEAD::Method method, std::span<const std::uint8_t> key);
 
     asio::awaitable<std::size_t> read(std::span<std::uint8_t> buffer);
     asio::awaitable<std::size_t> write(std::span<const std::uint8_t> buffer);

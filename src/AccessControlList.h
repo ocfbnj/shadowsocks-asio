@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "IPSet.h"
+#include "IpSet.h"
 
 class AccessControlList {
 public:
@@ -14,11 +14,11 @@ public:
 
     static AccessControlList fromFile(const std::string& path);
 
-    bool is_bypass(const std::string& ip) const;
+    bool isBypass(const std::string& ip) const;
 
 private:
-    IPSet bypass_list;
-    IPSet proxy_list;
+    IpSet bypassList;
+    IpSet proxyList;
 
     Mode mode = WhiteList;
 };

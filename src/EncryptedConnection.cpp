@@ -7,7 +7,7 @@
 #include "ReplayProtection.h"
 #include "io.h"
 
-EncryptedConnection::EncryptedConnection(TCPSocket s, crypto::AEAD::Method method, std::span<const std::uint8_t> key)
+EncryptedConnection::EncryptedConnection(TcpSocket s, crypto::AEAD::Method method, std::span<const std::uint8_t> key)
     : conn(std::move(s)),
       cipher(method),
       key(crypto::AEAD::keySize(method)),

@@ -4,14 +4,14 @@
 #include <cstdint>
 #include <string>
 
-class IPSet {
+class IpSet {
 public:
-    IPSet() = default;
-    IPSet(const IPSet&) = delete;
-    IPSet& operator=(const IPSet&) = delete;
-    IPSet(IPSet&& other);
-    IPSet& operator=(IPSet&& other);
-    ~IPSet();
+    IpSet() = default;
+    IpSet(const IpSet&) = delete;
+    IpSet& operator=(const IpSet&) = delete;
+    IpSet(IpSet&& other);
+    IpSet& operator=(IpSet&& other);
+    ~IpSet();
 
     /**
      * @par Example
@@ -42,7 +42,7 @@ public:
     bool contains(const std::string& ip) const;
 
     /**
-     * @brief clear the IPSet
+     * @brief clear the IpSet
      * @par Example
      * @code
      * IPset set;

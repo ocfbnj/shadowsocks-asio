@@ -3,7 +3,7 @@ add_executable(
     AccessControlList.cpp
     Connection.cpp
     EncryptedConnection.cpp
-    IPSet.cpp
+    IpSet.cpp
     main.cpp
     ReplayProtection.cpp
     socks5.cpp
