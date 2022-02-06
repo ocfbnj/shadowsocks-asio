@@ -7,6 +7,7 @@ add_executable(
     main.cpp
     ReplayProtection.cpp
     socks5.cpp
+    SSURL.cpp
     tcp.cpp)
 
 if(UNIX AND NOT APPLE)

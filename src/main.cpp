@@ -14,19 +14,19 @@
 
 #include <crypto/aead/AEAD.h>
 
+#include "SSURL.h"
 #include "tcp.h"
 
 constexpr std::string_view Version = "v0.1.0";
 
 static bool remoteMode = true;
 
-static std::string_view remoteHost;
-static std::string_view remotePort;
-static std::string_view localPort;
-static std::string_view password;
-static std::string_view aclFilePath;
-
-static crypto::AEAD::Method method = crypto::AEAD::ChaCha20Poly1305;
+static std::string remoteHost;
+static std::string remotePort;
+static std::string localPort;
+static std::string password;
+static std::string aclFilePath;
+static std::string method = "chacha20-ietf-poly1305";
 
 static void printUsage() {
     std::cout << fmt::format("shadowsocks-asio {}\n"
@@ -52,6 +52,7 @@ static void printUsage() {
                              "                               chacha20-ietf-poly1305 (Default)\n"
                              "\n"
                              "    --acl <file path>          Access control list\n"
+                             "    --url <SS-URL>             SS-URL\n"
                              "\n",
                              Version);
 }
@@ -91,17 +92,24 @@ int main(int argc, char* argv[]) {
         } else if (!strcmp("-k", argv[i])) {
             password = argv[++i];
         } else if (!strcmp("-m", argv[i])) {
-            method = pickCipher(argv[++i]);
+            method = argv[++i];
         } else if (!strcmp("--acl", argv[i])) {
             aclFilePath = argv[++i];
+        } else if (!strcmp("--url", argv[i])) {
+            SSURL url = SSURL::parse(argv[++i]);
+
+            method = url.userinfo.method;
+            password = url.userinfo.password;
+            remoteHost = url.hostname;
+            remotePort = url.port;
         } else if (!strcmp("-V", argv[i])) {
             spdlog::set_level(spdlog::level::debug);
         }
     }
 
-    if (method == crypto::AEAD::Invalid) {
-        std::cout << "Invalid encrypt method.\n\n";
-        printUsage();
+    crypto::AEAD::Method encryptMethod = pickCipher(method);
+    if (encryptMethod == crypto::AEAD::Invalid) {
+        std::cout << "Invalid encrypt method: " + method << "\n";
         return 0;
     }
 
@@ -113,18 +121,41 @@ int main(int argc, char* argv[]) {
             return 0;
         }
 
-        asio::co_spawn(ctx, tcpRemote(method, remotePort, password), asio::detached);
+        asio::co_spawn(ctx, tcpRemote(encryptMethod, remotePort, password), asio::detached);
     } else {
         if (remoteHost.empty() || remotePort.empty() || localPort.empty() || password.empty()) {
             printUsage();
             return 0;
         }
 
+        // print information
+        {
+            SSURL::UserInfo userinfo{
+                .method = method,
+                .password = password,
+            };
+
+            SSURL ssurl{
+                .userinfo = userinfo,
+                .hostname = remoteHost,
+                .port = remotePort,
+            };
+
+            spdlog::debug("\n=======================================\n"
+                          "| hostname: {}\n"
+                          "| port: {}\n"
+                          "| method: {}\n"
+                          "| password: {}\n"
+                          "| SS-URL: {}\n"
+                          "=======================================",
+                          ssurl.hostname, ssurl.port, userinfo.method, userinfo.password, ssurl.encode());
+        }
+
         std::optional<std::string> acl;
         if (!aclFilePath.empty()) {
             acl = aclFilePath;
         }
-        asio::co_spawn(ctx, tcpLocal(method, remoteHost, remotePort, localPort, password, acl), asio::detached);
+        asio::co_spawn(ctx, tcpLocal(encryptMethod, remoteHost, remotePort, localPort, password, acl), asio::detached);
     }
 
     asio::signal_set signals(ctx, SIGINT, SIGTERM);
