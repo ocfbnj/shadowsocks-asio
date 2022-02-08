@@ -48,3 +48,11 @@ jobs:
           name: ${{ matrix.platform.name }}
           path: ./build/src/shadowsocks-asio*
           if-no-files-found: error
+      - name: Test
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            echo "ignore"
+          else
+            ./build/test/test_ssurl
+          fi

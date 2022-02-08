@@ -28,6 +28,7 @@ conan_cmake_configure(
         mbedtls/3.1.0
         fmt/8.1.1
         spdlog/1.9.2
+        gtest/cci.20210126
     GENERATORS
         cmake_find_package)
 
@@ -43,6 +44,7 @@ find_package(asio REQUIRED)
 find_package(MbedTLS REQUIRED)
 find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
+find_package(GTest)
 
 #############################################################################################
 ########### Conan Package Manager End #######################################################
@@ -51,3 +53,4 @@ add_subdirectory(libs/crypto/src)
 add_subdirectory(libs/bloom)
 
 add_subdirectory(src)
+add_subdirectory(test)

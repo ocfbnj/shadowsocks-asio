@@ -1,12 +1,12 @@
 #include <stdexcept>
 
-#include <crypto/codec/base64.h>
+#include <crypto/codec/base64url.h>
 #include <crypto/crypto.h>
 
 #include "SSURL.h"
 
 SSURL::UserInfo SSURL::UserInfo::parse(const std::string& str) {
-    std::string methodAndPassword = crypto::toString(crypto::codec::base64::decode(crypto::toSpan(str)));
+    std::string methodAndPassword = crypto::toString(crypto::codec::experimental::base64url::decode(crypto::toSpan(str)));
     auto colonPos = methodAndPassword.find(':');
 
     if (colonPos == std::string::npos) {
@@ -20,7 +20,7 @@ SSURL::UserInfo SSURL::UserInfo::parse(const std::string& str) {
 }
 
 std::string SSURL::UserInfo::encode() const {
-    return crypto::toString(crypto::codec::base64::encode(crypto::toSpan(method + ":" + password)));
+    return crypto::toString(crypto::codec::experimental::base64url::encode(crypto::toSpan(method + ":" + password)));
 }
 
 SSURL SSURL::parse(const std::string& str) {
