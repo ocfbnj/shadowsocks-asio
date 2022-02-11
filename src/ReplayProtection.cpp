@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <cassert>
 
+#include <crypto/crypto.h>
+
 #include "ReplayProtection.h"
 
 ReplayProtection& ReplayProtection::get() {
@@ -12,6 +14,9 @@ ReplayProtection::ReplayProtection() {
     bloom_parameters parameters;
     parameters.projected_element_count = count;
     parameters.false_positive_probability = 1e-6;
+    unsigned long long seed;
+    crypto::randomBytes(std::span{reinterpret_cast<std::uint8_t*>(&seed), sizeof(seed)});
+    parameters.random_seed = seed;
 
     bool ok = parameters.compute_optimal_parameters();
     assert(ok);
