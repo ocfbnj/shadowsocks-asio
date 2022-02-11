@@ -18,7 +18,7 @@
 #include "tcp.h"
 
 namespace {
-constexpr std::string_view Version = "v0.1.0";
+constexpr std::string_view Version = "v0.1.1";
 
 bool remoteMode = true;
 
