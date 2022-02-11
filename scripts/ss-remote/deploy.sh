@@ -1,7 +1,7 @@
 #!/bin/bash
 
 name="shadowsocks-asio"
-version="v0.1.0"
+version="v0.1.1"
 
 download_file="${name}.tar.gz"
 url="https://github.com/ocfbnj/${name}/releases/download/${version}/${download_file}"
