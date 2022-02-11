@@ -8,10 +8,11 @@ This project uses Asio network library, as well as the Coroutine and Concept fea
 
 ## Features
 
-- [x] SOCKS5 CONNECT command
+- [x] [SOCKS5](https://datatracker.ietf.org/doc/html/rfc1928) CONNECT command
 - [x] [AEAD](https://shadowsocks.org/en/wiki/AEAD-Ciphers.html) ciphers
 - [x] Defend against [replay attacks](https://github.com/shadowsocks/shadowsocks-org/issues/44)
 - [x] [Access control list](https://github.com/shadowsocks/shadowsocks-rust#acl) (Client and IPv4 only)
+- [x] [SIP002](https://shadowsocks.org/en/wiki/SIP002-URI-Scheme.html) URI scheme
 
 ## Get Started
 
