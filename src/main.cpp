@@ -17,18 +17,19 @@
 #include "SSURL.h"
 #include "tcp.h"
 
+namespace {
 constexpr std::string_view Version = "v0.1.0";
 
-static bool remoteMode = true;
+bool remoteMode = true;
 
-static std::string remoteHost;
-static std::string remotePort;
-static std::string localPort;
-static std::string password;
-static std::string aclFilePath;
-static std::string method = "chacha20-ietf-poly1305";
+std::string remoteHost;
+std::string remotePort;
+std::string localPort;
+std::string password;
+std::string aclFilePath;
+std::string method = "chacha20-ietf-poly1305";
 
-static void printUsage() {
+void printUsage() {
     std::cout << fmt::format("shadowsocks-asio {}\n"
                              "A lightweight shadowsocks implementation using Asio and C++20 Coroutines.\n"
                              "\n"
@@ -57,7 +58,27 @@ static void printUsage() {
                              Version);
 }
 
-static crypto::AEAD::Method pickCipher(std::string_view method) {
+void printDebugInfo() {
+    SSURL ssurl{
+        .userinfo = {
+            .method = method,
+            .password = password,
+        },
+        .hostname = remoteHost,
+        .port = remotePort,
+    };
+
+    spdlog::debug("\n=======================================\n"
+                  "| hostname: {}\n"
+                  "| port: {}\n"
+                  "| method: {}\n"
+                  "| password: {}\n"
+                  "| SS-URL: {}\n"
+                  "=======================================",
+                  ssurl.hostname, ssurl.port, ssurl.userinfo.method, ssurl.userinfo.password, ssurl.encode());
+}
+
+crypto::AEAD::Method pickCipher(std::string_view method) {
     crypto::AEAD::Method res = crypto::AEAD::Invalid;
 
     if (method == "chacha20-ietf-poly1305") {
@@ -70,6 +91,7 @@ static crypto::AEAD::Method pickCipher(std::string_view method) {
 
     return res;
 }
+} // namespace
 
 int main(int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) {
@@ -113,44 +135,29 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    asio::io_context ctx;
-
     if (remoteMode) {
+        if (remoteHost.empty()) {
+            remoteHost = "0.0.0.0";
+        }
+
         if (remotePort.empty() || password.empty()) {
             printUsage();
             return 0;
         }
-
-        asio::co_spawn(ctx, tcpRemote(encryptMethod, remotePort, password), asio::detached);
     } else {
         if (remoteHost.empty() || remotePort.empty() || localPort.empty() || password.empty()) {
             printUsage();
             return 0;
         }
+    }
 
-        // print information
-        {
-            SSURL::UserInfo userinfo{
-                .method = method,
-                .password = password,
-            };
+    printDebugInfo();
 
-            SSURL ssurl{
-                .userinfo = userinfo,
-                .hostname = remoteHost,
-                .port = remotePort,
-            };
+    asio::io_context ctx;
 
-            spdlog::debug("\n=======================================\n"
-                          "| hostname: {}\n"
-                          "| port: {}\n"
-                          "| method: {}\n"
-                          "| password: {}\n"
-                          "| SS-URL: {}\n"
-                          "=======================================",
-                          ssurl.hostname, ssurl.port, userinfo.method, userinfo.password, ssurl.encode());
-        }
-
+    if (remoteMode) {
+        asio::co_spawn(ctx, tcpRemote(encryptMethod, remoteHost, remotePort, password), asio::detached);
+    } else {
         std::optional<std::string> acl;
         if (!aclFilePath.empty()) {
             acl = aclFilePath;

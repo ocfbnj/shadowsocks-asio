@@ -20,7 +20,10 @@
 #include "socks5.h"
 #include "tcp.h"
 
-asio::awaitable<void> tcpRemote(crypto::AEAD::Method method, std::string_view remotePort, std::string_view password) {
+asio::awaitable<void> tcpRemote(crypto::AEAD::Method method,
+                                std::string_view remoteHost,
+                                std::string_view remotePort,
+                                std::string_view password) {
     auto executor = co_await asio::this_coro::executor;
 
     // derive a key from password
@@ -28,16 +31,16 @@ asio::awaitable<void> tcpRemote(crypto::AEAD::Method method, std::string_view re
     crypto::deriveKey(std::span{reinterpret_cast<const std::uint8_t*>(password.data()), password.size()}, key);
 
     // listen
-    asio::ip::tcp::endpoint endpoint{asio::ip::tcp::v4(), static_cast<std::uint16_t>(std::stoul(remotePort.data()))};
-    TcpAcceptor acceptor{executor, endpoint};
+    asio::ip::tcp::endpoint listenEndpoint{asio::ip::make_address(remoteHost), static_cast<std::uint16_t>(std::stoul(remotePort.data()))};
+    TcpAcceptor acceptor{executor, listenEndpoint};
 
-    spdlog::info("Listen on {}:{}", endpoint.address().to_string(), endpoint.port());
+    spdlog::info("Listen on {}:{}", listenEndpoint.address().to_string(), listenEndpoint.port());
 
     auto serveSocket = [&method, &key](TcpSocket peer) -> asio::awaitable<void> {
         auto executor = co_await asio::this_coro::executor;
 
-        asio::ip::tcp::endpoint endpoint = peer.remote_endpoint();
-        std::string peerAddr = fmt::format("{}:{}", endpoint.address().to_string(), endpoint.port());
+        asio::ip::tcp::endpoint peerEndpoint = peer.remote_endpoint();
+        std::string peerAddr = fmt::format("{}:{}", peerEndpoint.address().to_string(), peerEndpoint.port());
 
         try {
             // establish an encrypted connection between ss-local and ss-remote
@@ -85,7 +88,8 @@ asio::awaitable<void> tcpRemote(crypto::AEAD::Method method, std::string_view re
 }
 
 asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
-                               std::string_view remoteHost, std::string_view remotePort,
+                               std::string_view remoteHost,
+                               std::string_view remotePort,
                                std::string_view localPort,
                                std::string_view password,
                                std::optional<std::string> aclFilePath) {
