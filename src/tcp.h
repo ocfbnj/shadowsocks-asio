@@ -11,7 +11,8 @@
 asio::awaitable<void> tcpRemote(crypto::AEAD::Method method,
                                 std::string_view remoteHost,
                                 std::string_view remotePort,
-                                std::string_view password);
+                                std::string_view password,
+                                std::optional<std::string> aclFilePath);
 
 asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
                                std::string_view remoteHost,

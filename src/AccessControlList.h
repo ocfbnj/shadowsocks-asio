@@ -15,10 +15,12 @@ public:
     static AccessControlList fromFile(const std::string& path);
 
     bool isBypass(const std::string& ip) const;
+    bool isBlockOutbound(const std::string& ip) const;
 
 private:
     IpSet bypassList;
     IpSet proxyList;
+    IpSet outboundBlockList;
 
     Mode mode = WhiteList;
 };

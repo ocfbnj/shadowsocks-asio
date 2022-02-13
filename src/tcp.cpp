@@ -23,12 +23,19 @@
 asio::awaitable<void> tcpRemote(crypto::AEAD::Method method,
                                 std::string_view remoteHost,
                                 std::string_view remotePort,
-                                std::string_view password) {
+                                std::string_view password,
+                                std::optional<std::string> aclFilePath) {
     auto executor = co_await asio::this_coro::executor;
 
     // derive a key from password
     std::vector<std::uint8_t> key(crypto::AEAD::keySize(method));
     crypto::deriveKey(std::span{reinterpret_cast<const std::uint8_t*>(password.data()), password.size()}, key);
+
+    // access control list
+    AccessControlList acl;
+    if (aclFilePath.has_value()) {
+        acl = AccessControlList::fromFile(aclFilePath.value());
+    }
 
     // listen
     asio::ip::tcp::endpoint listenEndpoint{asio::ip::make_address(remoteHost), static_cast<std::uint16_t>(std::stoul(remotePort.data()))};
@@ -36,11 +43,18 @@ asio::awaitable<void> tcpRemote(crypto::AEAD::Method method,
 
     spdlog::info("Listen on {}:{}", listenEndpoint.address().to_string(), listenEndpoint.port());
 
-    auto serveSocket = [&method, &key](TcpSocket peer) -> asio::awaitable<void> {
+    auto serveSocket = [&method, &key, &acl](TcpSocket peer) -> asio::awaitable<void> {
         auto executor = co_await asio::this_coro::executor;
 
         asio::ip::tcp::endpoint peerEndpoint = peer.remote_endpoint();
         std::string peerAddr = fmt::format("{}:{}", peerEndpoint.address().to_string(), peerEndpoint.port());
+
+        if (acl.isBypass(peerEndpoint.address().to_string())) {
+            spdlog::debug("Reject client address: {}", peerAddr);
+            co_return;
+        } else {
+            spdlog::debug("Accept client address: {}", peerAddr);
+        }
 
         try {
             // establish an encrypted connection between ss-local and ss-remote
@@ -58,6 +72,14 @@ asio::awaitable<void> tcpRemote(crypto::AEAD::Method method,
             TcpResolver r{executor};
             TcpResolver::results_type results = co_await r.async_resolve(host, port);
             const asio::ip::tcp::endpoint& endpoint = *results.begin();
+
+            if (acl.isBlockOutbound(endpoint.address().to_string())) {
+                spdlog::debug("Block outbound: {}:{}", endpoint.address().to_string(), endpoint.port());
+                ec->close();
+                co_return;
+            } else {
+                spdlog::debug("Allow outbound: {}:{}", endpoint.address().to_string(), endpoint.port());
+            }
 
             // connect to target host
             TcpSocket socket{executor};
@@ -99,13 +121,13 @@ asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
     std::vector<std::uint8_t> key(crypto::AEAD::keySize(method));
     crypto::deriveKey(std::span{reinterpret_cast<const std::uint8_t*>(password.data()), password.size()}, key);
 
+    // access control list
     AccessControlList acl;
     if (aclFilePath.has_value()) {
         acl = AccessControlList::fromFile(aclFilePath.value());
     }
 
     // resolve ss-remote server endpoint
-    // TODO add timeout
     TcpResolver resolver{executor};
     TcpResolver::results_type results = co_await resolver.async_resolve(remoteHost.data(), remotePort.data());
     const asio::ip::tcp::endpoint& remoteEndpoint = *results.begin();

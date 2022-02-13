@@ -36,14 +36,16 @@ AccessControlList AccessControlList::fromFile(const std::string& path) {
             continue;
         }
 
-        if (line == "[proxy_all]") {
+        if (line == "[proxy_all]" || line == "[accept_all]") {
             acl.mode = WhiteList;
-        } else if (line == "[bypass_all]") {
+        } else if (line == "[bypass_all]" || line == "[reject_all]") {
             acl.mode = BlackList;
-        } else if (line == "[bypass_list]") {
+        } else if (line == "[bypass_list]" || line == "[black_list]") {
             curList = &acl.bypassList;
-        } else if (line == "[proxy_list]") {
+        } else if (line == "[proxy_list]" || line == "[white_list]") {
             curList = &acl.proxyList;
+        } else if (line == "[outbound_block_list]") {
+            curList = &acl.outboundBlockList;
         } else {
             curList->insert(line);
         }
@@ -62,4 +64,8 @@ bool AccessControlList::isBypass(const std::string& ip) const {
     }
 
     return mode == BlackList;
+}
+
+bool AccessControlList::isBlockOutbound(const std::string& ip) const {
+    return outboundBlockList.contains(ip);
 }

@@ -155,13 +155,14 @@ int main(int argc, char* argv[]) {
 
     asio::io_context ctx;
 
+    std::optional<std::string> acl;
+    if (!aclFilePath.empty()) {
+        acl = aclFilePath;
+    }
+
     if (remoteMode) {
-        asio::co_spawn(ctx, tcpRemote(encryptMethod, remoteHost, remotePort, password), asio::detached);
+        asio::co_spawn(ctx, tcpRemote(encryptMethod, remoteHost, remotePort, password, acl), asio::detached);
     } else {
-        std::optional<std::string> acl;
-        if (!aclFilePath.empty()) {
-            acl = aclFilePath;
-        }
         asio::co_spawn(ctx, tcpLocal(encryptMethod, remoteHost, remotePort, localPort, password, acl), asio::detached);
     }
 
