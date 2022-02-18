@@ -46,7 +46,7 @@ jobs:
         uses: actions/upload-artifact@v2.3.1
         with:
           name: ${{ matrix.platform.name }}
-          path:|
+          path: |
             ./build/src/shadowsocks-asio
             ./build/src/Release/shadowsocks-asio.exe
           if-no-files-found: error
