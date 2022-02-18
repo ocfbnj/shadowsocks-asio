@@ -49,7 +49,6 @@ jobs:
           path: |
             ./build/src/shadowsocks-asio
             ./build/src/Release/shadowsocks-asio.exe
-          if-no-files-found: error
       - name: Test
         shell: bash
         run: |
