@@ -46,13 +46,14 @@ jobs:
         uses: actions/upload-artifact@v2.3.1
         with:
           name: ${{ matrix.platform.name }}
-          path: ./build/src/shadowsocks-asio*
-          if-no-files-found: error
+          path: |
+            ./build/src/shadowsocks-asio
+            ./build/src/Release/shadowsocks-asio.exe
       - name: Test
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
-            echo "ignore"
+            ./build/test/Release/test_ssurl
           else
             ./build/test/test_ssurl
           fi
