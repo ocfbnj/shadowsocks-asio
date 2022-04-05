@@ -158,7 +158,7 @@ asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
             std::string ip = targetEndpoint.address().to_string();
 
             if (!acl.isBypass(ip)) {
-                spdlog::debug("Proxy target address: {}:{}", host, port);
+                spdlog::debug("Proxy target address: {}:{} ({})", host, port, ip);
 
                 // connect to ss-remote server
                 TcpSocket remoteSocket{executor};
@@ -175,7 +175,7 @@ asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
                 asio::co_spawn(strand, ioCopy(c, eC), asio::detached);
                 asio::co_spawn(strand, ioCopy(eC, c), asio::detached);
             } else {
-                spdlog::debug("Bypass target address: {}:{}", host, port);
+                spdlog::debug("Bypass target address: {}:{} ({})", host, port, ip);
 
                 // connect to target host
                 TcpSocket targetSocket{executor};
