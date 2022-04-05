@@ -24,7 +24,7 @@ include(${CMAKE_BINARY_DIR}/conan.cmake)
 # Add requires here
 conan_cmake_configure(
     REQUIRES
-        asio/1.22.0
+        asio/1.22.1
         mbedtls/3.1.0
         fmt/8.1.1
         spdlog/1.9.2
