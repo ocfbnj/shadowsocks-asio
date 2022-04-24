@@ -104,8 +104,12 @@ asio::awaitable<void> tcpRemote(crypto::AEAD::Method method,
     };
 
     while (true) {
-        TcpSocket peer = co_await acceptor.async_accept();
-        asio::co_spawn(executor, serveSocket(std::move(peer)), asio::detached);
+        try {
+            TcpSocket peer = co_await acceptor.async_accept();
+            asio::co_spawn(executor, serveSocket(std::move(peer)), asio::detached);
+        } catch (const std::exception& e) {
+            spdlog::warn("Accept error: {}", e.what());
+        }
     }
 }
 
@@ -201,7 +205,11 @@ asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
     };
 
     while (true) {
-        TcpSocket peer = co_await acceptor.async_accept();
-        asio::co_spawn(executor, serveSocket(std::move(peer)), asio::detached);
+        try {
+            TcpSocket peer = co_await acceptor.async_accept();
+            asio::co_spawn(executor, serveSocket(std::move(peer)), asio::detached);
+        } catch (const std::exception& e) {
+            spdlog::warn("Accept error: {}", e.what());
+        }
     }
 }
