@@ -62,7 +62,7 @@ public:
     const char* what() const noexcept override;
 
 private:
-    hand_shake_err_code errCode;
+    hand_shake_err_code err_code;
 };
 
 // Read a SOCK5 address from r.

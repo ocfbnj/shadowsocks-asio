@@ -16,7 +16,7 @@ public:
     /**
      * @par Example
      * @code
-     * IPset set;
+     * ip_set set;
      * set.insert("192.168.0.0/16");
      * @endcode
      */
@@ -25,7 +25,7 @@ public:
     /**
      * @par Example
      * @code
-     * IPset set;
+     * ip_set set;
      * set.insert(0x12340000, 16);
      * @endcode
      */
@@ -34,7 +34,7 @@ public:
     /**
      * @par Example
      * @code
-     * IPset set;
+     * ip_set set;
      * set.insert("192.168.0.0/16");
      * set.contains("192.168.0.1"); // return true
      * @endcode
@@ -42,10 +42,10 @@ public:
     bool contains(const std::string& ip) const;
 
     /**
-     * @brief clear the IpSet
+     * @brief clear the ip_set
      * @par Example
      * @code
-     * IPset set;
+     * ip_set set;
      * set.insert("192.168.0.0/16");
      * set.contains("192.168.0.1"); // return true
      * set.clear();
@@ -55,13 +55,13 @@ public:
     void clear();
 
 private:
-    struct TrieNode {
-        TrieNode* left = nullptr;  // bit 0
-        TrieNode* right = nullptr; // bit 1
+    struct trie_node {
+        trie_node* left = nullptr;  // bit 0
+        trie_node* right = nullptr; // bit 1
         bool is_complete = false;
     };
 
-    TrieNode root;
+    trie_node root;
 };
 
 #endif

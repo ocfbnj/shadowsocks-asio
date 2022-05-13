@@ -3,7 +3,7 @@
 
 #include "socks5.h"
 
-hand_shake_error::hand_shake_error(hand_shake_err_code err) : errCode(err) {}
+hand_shake_error::hand_shake_error(hand_shake_err_code err) : err_code(err) {}
 
 const char* hand_shake_error::what() const noexcept {
     static std::unordered_map<hand_shake_err_code, std::string_view> errToStr{
@@ -13,5 +13,5 @@ const char* hand_shake_error::what() const noexcept {
         {hand_shake_err_code::atyp, "No supported address type"},
     };
 
-    return errToStr[errCode].data();
+    return errToStr[err_code].data();
 }

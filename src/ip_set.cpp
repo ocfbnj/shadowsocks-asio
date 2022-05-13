@@ -71,7 +71,7 @@ void ip_set::insert(const std::string& cidr) {
 }
 
 void ip_set::insert(std::uint32_t ip, std::uint8_t bits) {
-    TrieNode* node = &root;
+    trie_node* node = &root;
 
     if (bits == 0) {
         return;
@@ -81,12 +81,12 @@ void ip_set::insert(std::uint32_t ip, std::uint8_t bits) {
         std::uint8_t bit = (ip >> (31 - i)) & 1;
         if (bit) {
             if (!node->right) {
-                node->right = new TrieNode{};
+                node->right = new trie_node{};
             }
             node = node->right;
         } else {
             if (!node->left) {
-                node->left = new TrieNode{};
+                node->left = new trie_node{};
             }
             node = node->left;
         }
@@ -104,7 +104,7 @@ bool ip_set::contains(const std::string& ip) const {
     }
 
     std::uint32_t addr_value = addr.value();
-    const TrieNode* node = &root;
+    const trie_node* node = &root;
 
     for (std::uint8_t i = 0; i != 32; i++) {
         std::uint8_t bit = (addr_value >> (31 - i)) & 1;
@@ -127,7 +127,7 @@ bool ip_set::contains(const std::string& ip) const {
 }
 
 void ip_set::clear() {
-    std::function<void(TrieNode*)> free = [&, this](TrieNode* node) {
+    std::function<void(trie_node*)> free = [&, this](trie_node* node) {
         if (node) {
             free(node->left);
             free(node->right);
