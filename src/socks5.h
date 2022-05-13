@@ -10,156 +10,156 @@
 
 #include "io.h"
 
-// Ver is the value of VER field described in RFC 1928.
-constexpr auto Ver = 0x05;
+// ver is the value of VER field described in RFC 1928.
+constexpr auto ver = 0x05;
 
 // The maximum length of target address (1 + 1 + 255 + 2).
-constexpr auto MaxAddrLen = 259;
+constexpr auto max_addr_len = 259;
 
-// The maximum length of request message (3 + MaxAddrLen).
-constexpr auto MaxMsgLen = 262;
+// The maximum length of request message (3 + max_addr_len).
+constexpr auto max_msg_len = 262;
 
 // SOCKS5 request command defined in RFC 1928 section 4.
-enum class CMD : std::uint8_t {
-    CONNECT = 0x01,
-    BIND = 0x02,
-    UDP_ASSOCIATE = 0x03
+enum class cmd : std::uint8_t {
+    connect = 0x01,
+    bind = 0x02,
+    udp_associate = 0x03
 };
 
 // SOCKS5 address type defined in RFC 1928 section 5.
-enum class Atyp : std::uint8_t {
-    IPv4 = 0x01,
-    DOMAINNAME = 0x03,
-    IPv6 = 0x04
+enum class atyp : std::uint8_t {
+    ipv4 = 0x01,
+    domainname = 0x03,
+    ipv6 = 0x04
 };
 
 // SOCKS5 methods defined in RFC 1928 section 3.
-enum class Method : std::uint8_t {
-    NoAuthentication = 0x00,
-    GSSAPI = 0x01,
-    UsernamePassword = 0x02,
-    NoAcceptable = 0xff
+enum class method : std::uint8_t {
+    no_authentication = 0x00,
+    gssapi = 0x01,
+    username_password = 0x02,
+    no_acceptable = 0xff
 };
 
 // SOCKS5 commands defined in RFC 1928 section 4.
-enum class Command : std::uint8_t {
-    Connect = 0x01,
-    Bind = 0x02,
-    UDP = 0x03
+enum class command : std::uint8_t {
+    connect = 0x01,
+    bind = 0x02,
+    udp = 0x03
 };
 
-enum class HandShakeErrCode {
-    Version,
-    Method,
-    Command,
-    Atyp
+enum class hand_shake_err_code {
+    version,
+    method,
+    command,
+    atyp
 };
 
-class HandShakeError : public std::exception {
+class hand_shake_error : public std::exception {
 public:
-    HandShakeError(HandShakeErrCode err);
+    hand_shake_error(hand_shake_err_code err);
 
     const char* what() const noexcept override;
 
 private:
-    HandShakeErrCode errCode;
+    hand_shake_err_code errCode;
 };
 
 // Read a SOCK5 address from r.
-asio::awaitable<std::string> readTgtAddr(Reader auto& r, std::string& host, std::string& port) {
-    std::string socks5Addr;
+asio::awaitable<std::string> read_tgt_addr(reader auto& r, std::string& host, std::string& port) {
+    std::string socks5_addr;
 
     std::uint8_t type;
-    co_await readFull(r, std::span{&type, 1});
+    co_await read_full(r, std::span{&type, 1});
 
-    Atyp atyp = static_cast<Atyp>(type);
-    socks5Addr.push_back(static_cast<char>(atyp));
+    atyp at = static_cast<atyp>(type);
+    socks5_addr.push_back(static_cast<char>(at));
 
-    switch (atyp) {
-    case Atyp::IPv4: {
+    switch (at) {
+    case atyp::ipv4: {
         asio::ip::address_v4::bytes_type addr;
-        co_await readFull(r, addr);
+        co_await read_full(r, addr);
         host = asio::ip::make_address_v4(addr).to_string();
 
-        socks5Addr.append(reinterpret_cast<const char*>(addr.data()), 4);
+        socks5_addr.append(reinterpret_cast<const char*>(addr.data()), 4);
     } break;
-    case Atyp::DOMAINNAME: {
+    case atyp::domainname: {
         std::uint8_t len;
-        co_await readFull(r, std::span{&len, 1});
+        co_await read_full(r, std::span{&len, 1});
 
-        std::string domainName(len, 0);
-        co_await readFull(r, std::span{reinterpret_cast<std::uint8_t*>(domainName.data()), len});
-        host = domainName;
+        std::string domain_name(len, 0);
+        co_await read_full(r, std::span{reinterpret_cast<std::uint8_t*>(domain_name.data()), len});
+        host = domain_name;
 
-        socks5Addr.push_back(static_cast<char>(len));
-        socks5Addr.append(domainName);
+        socks5_addr.push_back(static_cast<char>(len));
+        socks5_addr.append(domain_name);
     } break;
-    case Atyp::IPv6: {
+    case atyp::ipv6: {
         asio::ip::address_v6::bytes_type addr;
-        co_await readFull(r, addr);
+        co_await read_full(r, addr);
         host = asio::ip::make_address_v6(addr).to_string();
 
-        socks5Addr.append(reinterpret_cast<const char*>(addr.data()), 16);
+        socks5_addr.append(reinterpret_cast<const char*>(addr.data()), 16);
     } break;
     default:
-        throw HandShakeError{HandShakeErrCode::Atyp};
+        throw hand_shake_error{hand_shake_err_code::atyp};
     }
 
     std::uint16_t p;
-    co_await readFull(r, std::span{reinterpret_cast<std::uint8_t*>(&p), 2});
-    socks5Addr.append(reinterpret_cast<const char*>(&p), 2);
+    co_await read_full(r, std::span{reinterpret_cast<std::uint8_t*>(&p), 2});
+    socks5_addr.append(reinterpret_cast<const char*>(&p), 2);
 
     p = ntohs(p);
     port = std::to_string(p);
 
-    co_return socks5Addr;
+    co_return socks5_addr;
 }
 
-asio::awaitable<std::string> handshake(ReadWriter auto& rw, std::string& host, std::string& port) {
-    std::array<std::uint8_t, MaxMsgLen> buf;
+asio::awaitable<std::string> handshake(reader_writer auto& rw, std::string& host, std::string& port) {
+    std::array<std::uint8_t, max_msg_len> buf;
 
     // stage 1
-    std::size_t nRead = co_await readFull(rw, std::span{buf.data(), 2});
+    std::size_t n_read = co_await read_full(rw, std::span{buf.data(), 2});
 
-    if (buf[0] != Ver) {
-        throw HandShakeError{HandShakeErrCode::Version};
+    if (buf[0] != ver) {
+        throw hand_shake_error{hand_shake_err_code::version};
     }
 
-    co_await readFull(rw, std::span{buf.data() + nRead, buf[1]});
+    co_await read_full(rw, std::span{buf.data() + n_read, buf[1]});
 
     int i = 2;
     for (; i != 2 + buf[1]; i++) {
-        if (static_cast<Method>(buf[i]) == Method::NoAuthentication) {
+        if (static_cast<method>(buf[i]) == method::no_authentication) {
             break;
         }
     }
 
     if (i == 2 + buf[1]) {
-        throw HandShakeError{HandShakeErrCode::Method};
+        throw hand_shake_error{hand_shake_err_code::method};
     }
 
     // ok
-    std::uint8_t rsp1[] = {Ver, static_cast<std::uint8_t>(Method::NoAuthentication)};
+    std::uint8_t rsp1[] = {ver, static_cast<std::uint8_t>(method::no_authentication)};
     co_await rw.write(std::span{rsp1});
 
     // stage 2
-    co_await readFull(rw, std::span{buf.data(), 3});
+    co_await read_full(rw, std::span{buf.data(), 3});
 
-    if (buf[0] != Ver) {
-        throw HandShakeError{HandShakeErrCode::Version};
+    if (buf[0] != ver) {
+        throw hand_shake_error{hand_shake_err_code::version};
     }
 
-    if (static_cast<Command>(buf[1]) != Command::Connect) {
-        throw HandShakeError{HandShakeErrCode::Command};
+    if (static_cast<command>(buf[1]) != command::connect) {
+        throw hand_shake_error{hand_shake_err_code::command};
     }
 
-    std::string socks5Addr = co_await readTgtAddr(rw, host, port);
+    std::string socks5_addr = co_await read_tgt_addr(rw, host, port);
 
     // ok
-    std::uint8_t rsp2[] = {Ver, 0x00, 0x00, static_cast<std::uint8_t>(Atyp::IPv4), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    std::uint8_t rsp2[] = {ver, 0x00, 0x00, static_cast<std::uint8_t>(atyp::ipv4), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     co_await rw.write(std::span{rsp2});
 
-    co_return socks5Addr;
+    co_return socks5_addr;
 }
 
 #endif

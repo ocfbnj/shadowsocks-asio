@@ -5,10 +5,10 @@
 #include <asio/ts/socket.hpp>
 #include <asio/use_awaitable.hpp>
 
-using DefaultToken = asio::use_awaitable_t<>;
+using default_token = asio::use_awaitable_t<>;
 
-using TcpAcceptor = DefaultToken::as_default_on_t<asio::ip::tcp::acceptor>;
-using TcpSocket = DefaultToken::as_default_on_t<asio::ip::tcp::socket>;
-using TcpResolver = DefaultToken::as_default_on_t<asio::ip::tcp::resolver>;
+using tcp_acceptor = default_token::as_default_on_t<asio::ip::tcp::acceptor>;
+using tcp_socket = default_token::as_default_on_t<asio::ip::tcp::socket>;
+using tcp_resolver = default_token::as_default_on_t<asio::ip::tcp::resolver>;
 
 #endif

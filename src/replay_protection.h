@@ -9,15 +9,15 @@
 #include <bloom_filter.hpp>
 
 // See https://github.com/shadowsocks/shadowsocks-org/issues/44
-class ReplayProtection {
+class replay_protection {
 public:
-    static ReplayProtection& get();
+    static replay_protection& get();
 
     void insert(std::span<const std::uint8_t> element);
     bool contains(std::span<const std::uint8_t> element);
 
 private:
-    ReplayProtection();
+    replay_protection();
 
     std::array<bloom_filter, 2> filters;
     int current = 0;

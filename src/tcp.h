@@ -8,17 +8,17 @@
 
 #include <crypto/aead/AEAD.h>
 
-asio::awaitable<void> tcpRemote(crypto::AEAD::Method method,
-                                std::string_view remoteHost,
-                                std::string_view remotePort,
-                                std::string_view password,
-                                std::optional<std::string> aclFilePath);
+asio::awaitable<void> tcp_remote(crypto::AEAD::Method method,
+                                 std::string_view remote_host,
+                                 std::string_view remote_port,
+                                 std::string_view password,
+                                 std::optional<std::string> acl_file_path);
 
-asio::awaitable<void> tcpLocal(crypto::AEAD::Method method,
-                               std::string_view remoteHost,
-                               std::string_view remotePort,
-                               std::string_view localPort,
-                               std::string_view password,
-                               std::optional<std::string> aclFilePath);
+asio::awaitable<void> tcp_local(crypto::AEAD::Method method,
+                                std::string_view remoteHost,
+                                std::string_view remote_port,
+                                std::string_view local_port,
+                                std::string_view password,
+                                std::optional<std::string> acl_file_path);
 
 #endif

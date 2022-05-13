@@ -3,7 +3,7 @@
 #include <functional>
 #include <optional>
 
-#include "IpSet.h"
+#include "ip_set.h"
 
 namespace {
 std::optional<std::uint32_t> parse_ip_address(const std::string& ip) {
@@ -30,12 +30,12 @@ std::optional<std::uint32_t> parse_ip_address(const std::string& ip) {
 }
 } // namespace
 
-IpSet::IpSet(IpSet&& other) : root(other.root) {
+ip_set::ip_set(ip_set&& other) : root(other.root) {
     other.root.left = nullptr;
     other.root.right = nullptr;
 }
 
-IpSet& IpSet::operator=(IpSet&& other) {
+ip_set& ip_set::operator=(ip_set&& other) {
     if (&other == this) {
         return *this;
     }
@@ -47,11 +47,11 @@ IpSet& IpSet::operator=(IpSet&& other) {
     return *this;
 }
 
-IpSet::~IpSet() {
+ip_set::~ip_set() {
     clear();
 }
 
-void IpSet::insert(const std::string& cidr) {
+void ip_set::insert(const std::string& cidr) {
     auto pos = cidr.find('/');
     if (pos == std::string::npos) {
         return;
@@ -70,7 +70,7 @@ void IpSet::insert(const std::string& cidr) {
     insert(ip.value(), bits);
 }
 
-void IpSet::insert(std::uint32_t ip, std::uint8_t bits) {
+void ip_set::insert(std::uint32_t ip, std::uint8_t bits) {
     TrieNode* node = &root;
 
     if (bits == 0) {
@@ -97,7 +97,7 @@ void IpSet::insert(std::uint32_t ip, std::uint8_t bits) {
     }
 }
 
-bool IpSet::contains(const std::string& ip) const {
+bool ip_set::contains(const std::string& ip) const {
     std::optional<std::uint32_t> addr = parse_ip_address(ip);
     if (!addr.has_value()) {
         return false;
@@ -126,7 +126,7 @@ bool IpSet::contains(const std::string& ip) const {
     return false;
 }
 
-void IpSet::clear() {
+void ip_set::clear() {
     std::function<void(TrieNode*)> free = [&, this](TrieNode* node) {
         if (node) {
             free(node->left);

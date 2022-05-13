@@ -14,22 +14,22 @@
 
 #include <crypto/aead/AEAD.h>
 
-#include "SSURL.h"
+#include "ss_url.h"
 #include "tcp.h"
 
 namespace {
-constexpr std::string_view Version = "v0.1.1";
+constexpr std::string_view version = "v0.1.1";
 
-bool remoteMode = true;
+bool remote_mode = true;
 
-std::string remoteHost;
-std::string remotePort;
-std::string localPort;
+std::string remote_host;
+std::string remote_port;
+std::string local_port;
 std::string password;
-std::string aclFilePath;
+std::string acl_file_path;
 std::string method = "chacha20-ietf-poly1305";
 
-void printUsage() {
+void print_usage() {
     std::cout << fmt::format("shadowsocks-asio {}\n"
                              "A lightweight shadowsocks implementation using Asio and C++20 Coroutines.\n"
                              "\n"
@@ -55,17 +55,17 @@ void printUsage() {
                              "    --acl <file path>          Access control list\n"
                              "    --url <SS-URL>             SS-URL\n"
                              "\n",
-                             Version);
+                             version);
 }
 
-void printDebugInfo() {
-    SSURL ssurl{
+void print_debug_info() {
+    ss_url ssurl{
         .userinfo = {
             .method = method,
             .password = password,
         },
-        .hostname = remoteHost,
-        .port = remotePort,
+        .hostname = remote_host,
+        .port = remote_port,
     };
 
     spdlog::debug("\n=======================================\n"
@@ -78,7 +78,7 @@ void printDebugInfo() {
                   ssurl.hostname, ssurl.port, ssurl.userinfo.method, ssurl.userinfo.password, ssurl.encode());
 }
 
-crypto::AEAD::Method pickCipher(std::string_view method) {
+crypto::AEAD::Method pick_cipher(std::string_view method) {
     crypto::AEAD::Method res = crypto::AEAD::Invalid;
 
     if (method == "chacha20-ietf-poly1305") {
@@ -98,85 +98,85 @@ int main(int argc, char* argv[]) {
         using std::strcmp;
 
         if (!strcmp("--help", argv[i]) || !strcmp("-h", argv[i])) {
-            printUsage();
+            print_usage();
             return 0;
         } else if (!strcmp("--version", argv[i]) || !strcmp("-v", argv[i])) {
-            std::cout << Version << "\n";
+            std::cout << version << "\n";
             return 0;
         } else if (!strcmp("--Client", argv[i])) {
-            remoteMode = false;
+            remote_mode = false;
         } else if (!strcmp("-s", argv[i])) {
-            remoteHost = argv[++i];
+            remote_host = argv[++i];
         } else if (!strcmp("-p", argv[i])) {
-            remotePort = argv[++i];
+            remote_port = argv[++i];
         } else if (!strcmp("-l", argv[i])) {
-            localPort = argv[++i];
+            local_port = argv[++i];
         } else if (!strcmp("-k", argv[i])) {
             password = argv[++i];
         } else if (!strcmp("-m", argv[i])) {
             method = argv[++i];
         } else if (!strcmp("--acl", argv[i])) {
-            aclFilePath = argv[++i];
+            acl_file_path = argv[++i];
         } else if (!strcmp("--url", argv[i])) {
-            SSURL url = SSURL::parse(argv[++i]);
+            ss_url url = ss_url::parse(argv[++i]);
 
             method = url.userinfo.method;
             password = url.userinfo.password;
-            remoteHost = url.hostname;
-            remotePort = url.port;
+            remote_host = url.hostname;
+            remote_port = url.port;
         } else if (!strcmp("-V", argv[i])) {
             spdlog::set_level(spdlog::level::debug);
         }
     }
 
-    crypto::AEAD::Method encryptMethod = pickCipher(method);
-    if (encryptMethod == crypto::AEAD::Invalid) {
+    crypto::AEAD::Method encrypt_method = pick_cipher(method);
+    if (encrypt_method == crypto::AEAD::Invalid) {
         std::cout << "Invalid encrypt method: " + method << "\n";
         return 0;
     }
 
-    if (remoteMode) {
-        if (remoteHost.empty()) {
-            remoteHost = "0.0.0.0";
+    if (remote_mode) {
+        if (remote_host.empty()) {
+            remote_host = "0.0.0.0";
         }
 
-        if (remotePort.empty() || password.empty()) {
-            printUsage();
+        if (remote_port.empty() || password.empty()) {
+            print_usage();
             return 0;
         }
     } else {
-        if (remoteHost.empty() || remotePort.empty() || localPort.empty() || password.empty()) {
-            printUsage();
+        if (remote_host.empty() || remote_port.empty() || local_port.empty() || password.empty()) {
+            print_usage();
             return 0;
         }
     }
 
-    printDebugInfo();
+    print_debug_info();
 
     asio::io_context ctx;
 
     std::optional<std::string> acl;
-    if (!aclFilePath.empty()) {
-        acl = aclFilePath;
+    if (!acl_file_path.empty()) {
+        acl = acl_file_path;
     }
 
-    if (remoteMode) {
-        asio::co_spawn(ctx, tcpRemote(encryptMethod, remoteHost, remotePort, password, acl), asio::detached);
+    if (remote_mode) {
+        asio::co_spawn(ctx, tcp_remote(encrypt_method, remote_host, remote_port, password, acl), asio::detached);
     } else {
-        asio::co_spawn(ctx, tcpLocal(encryptMethod, remoteHost, remotePort, localPort, password, acl), asio::detached);
+        asio::co_spawn(ctx, tcp_local(encrypt_method, remote_host, remote_port, local_port, password, acl), asio::detached);
     }
 
     asio::signal_set signals(ctx, SIGINT, SIGTERM);
     signals.async_wait([&ctx](auto, auto) { ctx.stop(); });
 
-    std::vector<std::thread> threadPool(std::thread::hardware_concurrency());
-    for (std::thread& t : threadPool) {
+    std::vector<std::thread> thread_pool(std::thread::hardware_concurrency());
+    for (std::thread& t : thread_pool) {
         t = std::thread{[&ctx]() { ctx.run(); }};
     }
 
     ctx.run();
 
-    for (std::thread& t : threadPool) {
+    for (std::thread& t : thread_pool) {
         if (t.joinable()) {
             t.join();
         }

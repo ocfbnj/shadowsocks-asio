@@ -3,14 +3,14 @@
 
 #include <crypto/crypto.h>
 
-#include "ReplayProtection.h"
+#include "replay_protection.h"
 
-ReplayProtection& ReplayProtection::get() {
-    static ReplayProtection replayProtection;
-    return replayProtection;
+replay_protection& replay_protection::get() {
+    static replay_protection instance;
+    return instance;
 }
 
-ReplayProtection::ReplayProtection() {
+replay_protection::replay_protection() {
     bloom_parameters parameters;
     parameters.projected_element_count = count;
     parameters.false_positive_probability = 1e-6;
@@ -26,19 +26,19 @@ ReplayProtection::ReplayProtection() {
     }
 }
 
-void ReplayProtection::insert(std::span<const std::uint8_t> element) {
-    bloom_filter& bloomFilter = filters[current];
+void replay_protection::insert(std::span<const std::uint8_t> element) {
+    bloom_filter& bloom_filter = filters[current];
 
     std::lock_guard lock{mtx};
-    bloomFilter.insert(element.data(), element.size());
+    bloom_filter.insert(element.data(), element.size());
 
-    if (bloomFilter.element_count() >= count) {
+    if (bloom_filter.element_count() >= count) {
         current = !current;
         filters[current].clear();
     }
 }
 
-bool ReplayProtection::contains(std::span<const std::uint8_t> element) {
+bool replay_protection::contains(std::span<const std::uint8_t> element) {
     std::lock_guard lock{mtx};
     return std::any_of(filters.begin(), filters.end(), [element](auto& filter) {
         return filter.contains(element.data(), element.size());

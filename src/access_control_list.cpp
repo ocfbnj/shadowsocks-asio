@@ -4,68 +4,68 @@
 
 #include <fmt/format.h>
 
-#include "AccessControlList.h"
+#include "access_control_list.h"
 
 namespace {
-void trimComment(std::string& str) {
+void trim_comment(std::string& str) {
     str.erase(std::find(str.begin(), str.end(), '#'), str.end());
 }
 
-void trimSpace(std::string& str) {
+void trim_space(std::string& str) {
     str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](char c) { return !std::isspace(c); }));
     str.erase(std::find_if(str.rbegin(), str.rend(), [](char c) { return !std::isspace(c); }).base(), str.end());
 }
 } // namespace
 
-AccessControlList AccessControlList::fromFile(const std::string& path) {
-    AccessControlList acl;
+access_control_list access_control_list::from_file(const std::string& path) {
+    access_control_list acl;
 
     std::ifstream ifs{path.data(), std::ifstream::in | std::ifstream::binary};
     if (!ifs) {
         throw std::runtime_error{fmt::format("Cannot open acl file: {}", path)};
     }
 
-    IpSet* curList = &acl.bypassList;
+    ip_set* cur_list = &acl.bypass_list;
 
     std::string line;
     while (std::getline(ifs, line)) {
-        trimComment(line);
-        trimSpace(line);
+        trim_comment(line);
+        trim_space(line);
 
         if (line.empty()) {
             continue;
         }
 
         if (line == "[proxy_all]" || line == "[accept_all]") {
-            acl.mode = WhiteList;
+            acl.acl_mode = white_list;
         } else if (line == "[bypass_all]" || line == "[reject_all]") {
-            acl.mode = BlackList;
+            acl.acl_mode = black_list;
         } else if (line == "[bypass_list]" || line == "[black_list]") {
-            curList = &acl.bypassList;
+            cur_list = &acl.bypass_list;
         } else if (line == "[proxy_list]" || line == "[white_list]") {
-            curList = &acl.proxyList;
+            cur_list = &acl.proxy_list;
         } else if (line == "[outbound_block_list]") {
-            curList = &acl.outboundBlockList;
+            cur_list = &acl.outbound_block_list;
         } else {
-            curList->insert(line);
+            cur_list->insert(line);
         }
     }
 
     return acl;
 }
 
-bool AccessControlList::isBypass(const std::string& ip) const {
-    if (bypassList.contains(ip)) {
+bool access_control_list::is_bypass(const std::string& ip) const {
+    if (bypass_list.contains(ip)) {
         return true;
     }
 
-    if (proxyList.contains(ip)) {
+    if (proxy_list.contains(ip)) {
         return false;
     }
 
-    return mode == BlackList;
+    return acl_mode == black_list;
 }
 
-bool AccessControlList::isBlockOutbound(const std::string& ip) const {
-    return outboundBlockList.contains(ip);
+bool access_control_list::is_block_outbound(const std::string& ip) const {
+    return outbound_block_list.contains(ip);
 }

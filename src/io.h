@@ -11,36 +11,36 @@
 #include <spdlog/spdlog.h>
 
 template <typename T>
-concept Reader = requires(T r, std::span<std::uint8_t> buf) {
+concept reader = requires(T r, std::span<std::uint8_t> buf) {
     { r.read(buf) } -> std::same_as<asio::awaitable<std::size_t>>;
 };
 
 template <typename T>
-concept Writer = requires(T w, std::span<const std::uint8_t> buf) {
+concept writer = requires(T w, std::span<const std::uint8_t> buf) {
     { w.write(buf) } -> std::same_as<asio::awaitable<std::size_t>>;
 };
 
 template <typename T>
-concept Closer = requires(T c) {
+concept closer = requires(T c) {
     { c.close() } -> std::same_as<void>;
 };
 
 template <typename T>
-concept ReadWriter = Reader<T> && Writer<T>;
+concept reader_writer = reader<T> && writer<T>;
 
 template <typename T>
-concept ReadWriterCloser = Reader<T> && Writer<T> && Closer<T>;
+concept reader_writer_closer = reader<T> && writer<T> && closer<T>;
 
 template <typename T>
-concept Conn = ReadWriterCloser<T> && requires(T conn, int timeout) {
-    { conn.setReadTimeout(timeout) } -> std::same_as<void>;
+concept conn = reader_writer_closer<T> && requires(T conn, int timeout) {
+    { conn.set_read_timeout(timeout) } -> std::same_as<void>;
 };
 
-constexpr auto BufferSize = 32768;
+constexpr auto buffer_size = 32768;
 
-template <Conn W, Conn R>
-asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
-    std::array<std::uint8_t, BufferSize> buf;
+template <conn W, conn R>
+asio::awaitable<void> io_copy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
+    std::array<std::uint8_t, buffer_size> buf;
 
     try {
         while (true) {
@@ -52,7 +52,7 @@ asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
             w->close();
         }
 
-        w->setReadTimeout(5); // 5 seconds
+        w->set_read_timeout(5); // 5 seconds
 
         if (e.code() != asio::error::eof && e.code() != asio::error::timed_out) {
             spdlog::debug("{}", e.what());
@@ -61,19 +61,19 @@ asio::awaitable<void> ioCopy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
 }
 
 // readFull reads exactly buf.size() bytes from r.
-asio::awaitable<std::size_t> readFull(Reader auto& r, std::span<std::uint8_t> buf) {
+asio::awaitable<std::size_t> read_full(reader auto& r, std::span<std::uint8_t> buf) {
     std::uint8_t* data = buf.data();
-    std::size_t nRead = 0;
+    std::size_t n_read = 0;
     std::size_t remaining = buf.size();
 
     while (remaining > 0) {
-        std::size_t n = co_await r.read(std::span{data + nRead, remaining});
+        std::size_t n = co_await r.read(std::span{data + n_read, remaining});
 
-        nRead += n;
+        n_read += n;
         remaining -= n;
     }
 
-    co_return nRead;
+    co_return n_read;
 }
 
 #endif

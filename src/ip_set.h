@@ -4,14 +4,14 @@
 #include <cstdint>
 #include <string>
 
-class IpSet {
+class ip_set {
 public:
-    IpSet() = default;
-    IpSet(const IpSet&) = delete;
-    IpSet& operator=(const IpSet&) = delete;
-    IpSet(IpSet&& other);
-    IpSet& operator=(IpSet&& other);
-    ~IpSet();
+    ip_set() = default;
+    ip_set(const ip_set&) = delete;
+    ip_set& operator=(const ip_set&) = delete;
+    ip_set(ip_set&& other);
+    ip_set& operator=(ip_set&& other);
+    ~ip_set();
 
     /**
      * @par Example

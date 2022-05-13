@@ -1,13 +1,13 @@
 add_executable(
     ${CMAKE_PROJECT_NAME}
-    AccessControlList.cpp
-    Connection.cpp
-    EncryptedConnection.cpp
-    IpSet.cpp
+    access_control_list.cpp
+    connection.cpp
+    encrypted_connection.cpp
+    ip_set.cpp
     main.cpp
-    ReplayProtection.cpp
+    replay_protection.cpp
     socks5.cpp
-    SSURL.cpp
+    ss_url.cpp
     tcp.cpp)
 
 if(UNIX AND NOT APPLE)
