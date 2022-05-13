@@ -20,7 +20,7 @@
 #include "socks5.h"
 #include "tcp.h"
 
-asio::awaitable<void> tcp_remote(crypto::AEAD::Method method,
+asio::awaitable<void> tcp_remote(crypto::aead::method method,
                                  std::string_view remote_host,
                                  std::string_view remote_port,
                                  std::string_view password,
@@ -28,7 +28,7 @@ asio::awaitable<void> tcp_remote(crypto::AEAD::Method method,
     auto executor = co_await asio::this_coro::executor;
 
     // derive a key from password
-    std::vector<std::uint8_t> key(crypto::AEAD::keySize(method));
+    std::vector<std::uint8_t> key(crypto::aead::key_size(method));
     crypto::deriveKey(std::span{reinterpret_cast<const std::uint8_t*>(password.data()), password.size()}, key);
 
     // access control list
@@ -90,7 +90,7 @@ asio::awaitable<void> tcp_remote(crypto::AEAD::Method method,
             auto strand = asio::make_strand(executor);
             asio::co_spawn(strand, io_copy(c, ec), asio::detached);
             asio::co_spawn(strand, io_copy(ec, c), asio::detached);
-        } catch (const crypto::AEAD::DecryptionError& e) {
+        } catch (const crypto::aead::decryption_error& e) {
             spdlog::warn("{}: peer {}", e.what(), peer_addr);
         } catch (const encrypted_connection::duplicate_salt& e) {
             spdlog::warn("{}: peer {}", e.what(), peer_addr);
@@ -113,7 +113,7 @@ asio::awaitable<void> tcp_remote(crypto::AEAD::Method method,
     }
 }
 
-asio::awaitable<void> tcp_local(crypto::AEAD::Method method,
+asio::awaitable<void> tcp_local(crypto::aead::method method,
                                 std::string_view remote_host,
                                 std::string_view remote_port,
                                 std::string_view local_port,
@@ -122,7 +122,7 @@ asio::awaitable<void> tcp_local(crypto::AEAD::Method method,
     auto executor = co_await asio::this_coro::executor;
 
     // derive a key from password
-    std::vector<std::uint8_t> key(crypto::AEAD::keySize(method));
+    std::vector<std::uint8_t> key(crypto::aead::key_size(method));
     crypto::deriveKey(std::span{reinterpret_cast<const std::uint8_t*>(password.data()), password.size()}, key);
 
     // access control list

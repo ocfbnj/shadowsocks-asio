@@ -6,7 +6,7 @@
 #include "ss_url.h"
 
 ss_url::user_info ss_url::user_info::parse(const std::string& str) {
-    std::string method_and_password = crypto::toString(crypto::codec::experimental::base64url::decode(crypto::toSpan(str)));
+    std::string method_and_password = crypto::to_string(crypto::codec::experimental::base64url::decode(crypto::to_span(str)));
     auto colon_pos = method_and_password.find(':');
 
     if (colon_pos == std::string::npos) {
@@ -20,7 +20,7 @@ ss_url::user_info ss_url::user_info::parse(const std::string& str) {
 }
 
 std::string ss_url::user_info::encode() const {
-    return crypto::toString(crypto::codec::experimental::base64url::encode(crypto::toSpan(method + ":" + password)));
+    return crypto::to_string(crypto::codec::experimental::base64url::encode(crypto::to_span(method + ":" + password)));
 }
 
 ss_url ss_url::parse(const std::string& str) {

@@ -15,7 +15,7 @@ replay_protection::replay_protection() {
     parameters.projected_element_count = count;
     parameters.false_positive_probability = 1e-6;
     unsigned long long seed;
-    crypto::randomBytes(std::span{reinterpret_cast<std::uint8_t*>(&seed), sizeof(seed)});
+    crypto::random_bytes(std::span{reinterpret_cast<std::uint8_t*>(&seed), sizeof(seed)});
     parameters.random_seed = seed;
 
     bool ok = parameters.compute_optimal_parameters();

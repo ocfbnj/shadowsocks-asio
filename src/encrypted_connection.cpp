@@ -7,10 +7,10 @@
 #include "io.h"
 #include "replay_protection.h"
 
-encrypted_connection::encrypted_connection(tcp_socket s, crypto::AEAD::Method method, std::span<const std::uint8_t> key)
+encrypted_connection::encrypted_connection(tcp_socket s, crypto::aead::method method, std::span<const std::uint8_t> key)
     : conn(std::move(s)),
       cipher(method),
-      key(crypto::AEAD::keySize(method)),
+      key(crypto::aead::key_size(method)),
       enc_nonce(nonce_size, 0),
       dec_nonce(nonce_size, 0) {
     assert(key.size() == this->key.size());
@@ -64,7 +64,7 @@ asio::awaitable<std::size_t> encrypted_connection::write(std::span<const std::ui
     // write salt
     if (out_salt.empty()) {
         out_salt.resize(salt_size());
-        crypto::randomBytes(out_salt);
+        crypto::random_bytes(out_salt);
         co_await conn.write(out_salt);
     }
 
@@ -82,11 +82,11 @@ void encrypted_connection::set_read_timeout(int val) {
 }
 
 std::size_t encrypted_connection::salt_size() const {
-    switch (cipher.getMethod()) {
-    case crypto::AEAD::ChaCha20Poly1305:
-    case crypto::AEAD::AES256GCM:
+    switch (cipher.get_method()) {
+    case crypto::aead::chacha20_poly1305:
+    case crypto::aead::aes_256_gcm:
         return 32;
-    case crypto::AEAD::AES128GCM:
+    case crypto::aead::aes_128_gcm:
         return 16;
     default:
         assert(0);
@@ -96,7 +96,7 @@ std::size_t encrypted_connection::salt_size() const {
 
 void encrypted_connection::encrypt(std::span<const std::uint8_t> plaintext, std::span<std::uint8_t> ciphertext) {
     std::vector<std::uint8_t> subkey(key.size());
-    crypto::hkdfSha1(key, out_salt, crypto::toSpan("ss-subkey"), subkey);
+    crypto::hkdf_sha1(key, out_salt, crypto::to_span("ss-subkey"), subkey);
 
     cipher.encrypt(subkey, enc_nonce, {}, plaintext, ciphertext);
     crypto::increment(enc_nonce);
@@ -104,14 +104,14 @@ void encrypted_connection::encrypt(std::span<const std::uint8_t> plaintext, std:
 
 void encrypted_connection::decrypt(std::span<const std::uint8_t> ciphertext, std::span<std::uint8_t> plaintext) {
     std::vector<std::uint8_t> subkey(key.size());
-    crypto::hkdfSha1(key, in_salt, crypto::toSpan("ss-subkey"), subkey);
+    crypto::hkdf_sha1(key, in_salt, crypto::to_span("ss-subkey"), subkey);
 
     cipher.decrypt(subkey, dec_nonce, {}, ciphertext, plaintext);
     crypto::increment(dec_nonce);
 }
 
 asio::awaitable<std::size_t> encrypted_connection::read_encrypted_payload(std::span<std::uint8_t> out) {
-    std::size_t tag_size = cipher.getTagSize();
+    std::size_t tag_size = cipher.get_tag_size();
     std::vector<std::uint8_t> buf(maximum_payload_size + tag_size);
 
     // read encrypted length
@@ -131,7 +131,7 @@ asio::awaitable<std::size_t> encrypted_connection::read_encrypted_payload(std::s
 asio::awaitable<std::size_t> encrypted_connection::write_unencrypted_payload(std::span<const std::uint8_t> in) {
     std::size_t remaining = in.size();
     std::size_t n_write = 0;
-    std::size_t tag_size = cipher.getTagSize();
+    std::size_t tag_size = cipher.get_tag_size();
     std::vector<std::uint8_t> buf(maximum_payload_size + tag_size);
 
     while (remaining > 0) {

@@ -12,7 +12,7 @@
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
-#include <crypto/aead/AEAD.h>
+#include <crypto/aead.h>
 
 #include "ss_url.h"
 #include "tcp.h"
@@ -78,15 +78,15 @@ void print_debug_info() {
                   ssurl.hostname, ssurl.port, ssurl.userinfo.method, ssurl.userinfo.password, ssurl.encode());
 }
 
-crypto::AEAD::Method pick_cipher(std::string_view method) {
-    crypto::AEAD::Method res = crypto::AEAD::Invalid;
+crypto::aead::method pick_cipher(std::string_view method) {
+    crypto::aead::method res = crypto::aead::invalid;
 
     if (method == "chacha20-ietf-poly1305") {
-        res = crypto::AEAD::ChaCha20Poly1305;
+        res = crypto::aead::chacha20_poly1305;
     } else if (method == "aes-128-gcm") {
-        res = crypto::AEAD::AES128GCM;
+        res = crypto::aead::aes_128_gcm;
     } else if (method == "aes-256-gcm") {
-        res = crypto::AEAD::AES256GCM;
+        res = crypto::aead::aes_256_gcm;
     }
 
     return res;
@@ -129,8 +129,8 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    crypto::AEAD::Method encrypt_method = pick_cipher(method);
-    if (encrypt_method == crypto::AEAD::Invalid) {
+    crypto::aead::method encrypt_method = pick_cipher(method);
+    if (encrypt_method == crypto::aead::invalid) {
         std::cout << "Invalid encrypt method: " + method << "\n";
         return 0;
     }

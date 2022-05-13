@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include <crypto/aead/AEAD.h>
+#include <crypto/aead.h>
 
 #include "connection.h"
 
@@ -20,7 +20,7 @@ public:
         using std::runtime_error::runtime_error;
     };
 
-    encrypted_connection(tcp_socket s, crypto::AEAD::Method method, std::span<const std::uint8_t> key);
+    encrypted_connection(tcp_socket s, crypto::aead::method method, std::span<const std::uint8_t> key);
 
     asio::awaitable<std::size_t> read(std::span<std::uint8_t> buffer);
     asio::awaitable<std::size_t> write(std::span<const std::uint8_t> buffer);
@@ -46,7 +46,7 @@ private:
     // connection is not inherited because we want to use its methods directly.
     connection conn;
 
-    crypto::AEAD cipher;
+    crypto::aead cipher;
     std::vector<std::uint8_t> key;
     std::vector<std::uint8_t> enc_nonce;
     std::vector<std::uint8_t> dec_nonce;
