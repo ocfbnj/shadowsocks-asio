@@ -60,7 +60,7 @@ asio::awaitable<void> io_copy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
     }
 }
 
-// readFull reads exactly buf.size() bytes from r.
+// read_full reads exactly buf.size() bytes from r.
 asio::awaitable<std::size_t> read_full(reader auto& r, std::span<std::uint8_t> buf) {
     std::uint8_t* data = buf.data();
     std::size_t n_read = 0;
