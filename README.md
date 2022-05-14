@@ -14,6 +14,12 @@ This project uses Asio network library, as well as the Coroutine and Concept fea
 - [x] [Access control list](https://github.com/shadowsocks/shadowsocks-rust#acl) (IPv4 only)
 - [x] [SIP002](https://shadowsocks.org/en/wiki/SIP002-URI-Scheme.html) URI scheme
 
+TODO:
+
+- [ ] Add IPv6 and rules support for access control list.
+- [ ] Replace `fmt` with `std::fmt` (lack of compiler support).
+- [ ] Replace `asio` with `std::net` (it has not been standardized).
+
 ## Get Started
 
 ### Server
