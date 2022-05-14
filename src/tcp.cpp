@@ -14,31 +14,29 @@
 
 #include "access_control_list.h"
 #include "awaitable.h"
+#include "convert.h"
 #include "encrypted_connection.h"
 #include "io.h"
 #include "ip_set.h"
 #include "socks5.h"
 #include "tcp.h"
 
-asio::awaitable<void> tcp_remote(crypto::aead::method method,
-                                 std::string_view remote_host,
-                                 std::string_view remote_port,
-                                 std::string_view password,
-                                 std::optional<std::string> acl_file_path) {
+asio::awaitable<void> tcp_remote(config conf) {
     auto executor = co_await asio::this_coro::executor;
+    auto method = *method_from_string(conf.method);
 
     // derive a key from password
     std::vector<std::uint8_t> key(crypto::aead::key_size(method));
-    crypto::deriveKey(std::span{reinterpret_cast<const std::uint8_t*>(password.data()), password.size()}, key);
+    crypto::deriveKey(std::span{reinterpret_cast<const std::uint8_t*>(conf.password.data()), conf.password.size()}, key);
 
     // access control list
     access_control_list acl;
-    if (acl_file_path.has_value()) {
-        acl = access_control_list::from_file(acl_file_path.value());
+    if (conf.acl_file_path) {
+        acl = access_control_list::from_file(*conf.acl_file_path);
     }
 
     // listen
-    asio::ip::tcp::endpoint listen_endpoint{asio::ip::make_address(remote_host), static_cast<std::uint16_t>(std::stoul(remote_port.data()))};
+    asio::ip::tcp::endpoint listen_endpoint{asio::ip::make_address(conf.remote_host), static_cast<std::uint16_t>(std::stoul(conf.remote_port.data()))};
     tcp_acceptor acceptor{executor, listen_endpoint};
 
     spdlog::info("Listen on {}:{}", listen_endpoint.address().to_string(), listen_endpoint.port());
@@ -113,33 +111,29 @@ asio::awaitable<void> tcp_remote(crypto::aead::method method,
     }
 }
 
-asio::awaitable<void> tcp_local(crypto::aead::method method,
-                                std::string_view remote_host,
-                                std::string_view remote_port,
-                                std::string_view local_port,
-                                std::string_view password,
-                                std::optional<std::string> acl_file_path) {
+asio::awaitable<void> tcp_local(config conf) {
     auto executor = co_await asio::this_coro::executor;
+    auto method = *method_from_string(conf.method);
 
     // derive a key from password
     std::vector<std::uint8_t> key(crypto::aead::key_size(method));
-    crypto::deriveKey(std::span{reinterpret_cast<const std::uint8_t*>(password.data()), password.size()}, key);
+    crypto::deriveKey(std::span{reinterpret_cast<const std::uint8_t*>(conf.password.data()), conf.password.size()}, key);
 
     // access control list
     access_control_list acl;
-    if (acl_file_path.has_value()) {
-        acl = access_control_list::from_file(acl_file_path.value());
+    if (conf.acl_file_path) {
+        acl = access_control_list::from_file(*conf.acl_file_path);
     }
 
     // resolve ss-remote server endpoint
     tcp_resolver resolver{executor};
-    tcp_resolver::results_type results = co_await resolver.async_resolve(remote_host.data(), remote_port.data());
+    tcp_resolver::results_type results = co_await resolver.async_resolve(conf.remote_host.data(), conf.remote_port.data());
     const asio::ip::tcp::endpoint& remote_endpoint = *results.begin();
 
     spdlog::debug("Remote server: {}:{}", remote_endpoint.address().to_string(), remote_endpoint.port());
 
     // listen
-    asio::ip::tcp::endpoint local_endpoint{asio::ip::tcp::v4(), static_cast<std::uint16_t>(std::stoul(local_port.data()))};
+    asio::ip::tcp::endpoint local_endpoint{asio::ip::tcp::v4(), static_cast<std::uint16_t>(std::stoul(conf.local_port.data()))};
     tcp_acceptor acceptor{executor, local_endpoint};
 
     spdlog::info("Listen on {}:{}", local_endpoint.address().to_string(), local_endpoint.port());

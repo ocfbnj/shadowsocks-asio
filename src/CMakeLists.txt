@@ -1,7 +1,9 @@
 add_executable(
     ${CMAKE_PROJECT_NAME}
     access_control_list.cpp
+    config.cpp
     connection.cpp
+    convert.cpp
     encrypted_connection.cpp
     ip_set.cpp
     main.cpp
