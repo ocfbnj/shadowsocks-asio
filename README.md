@@ -17,7 +17,8 @@ This project uses Asio network library, as well as the Coroutine and Concept fea
 TODO:
 
 - [ ] Add IPv6 and rules support for access control list.
-- [ ] Replace `fmt` with `std::fmt` (lack of compiler support).
+- [ ] Add socks4a support.
+- [ ] Replace `fmt` with `std::format` (lack of compiler support).
 - [ ] Replace `asio` with `std::net` (it has not been standardized).
 
 ## Get Started
@@ -38,6 +39,41 @@ The client listens on port 1080 for incoming SOCKS5 connections and uses `chacha
 
 ~~~bash
 shadowsocks-asio --Client -s ocfbnj.cn -p 5421 -l 1080 -k ocfbnj -m chacha20-ietf-poly1305
+~~~
+
+### Usage
+
+~~~bash
+shadowsocks-asio
+A lightweight shadowsocks implementation using Asio and C++20 Coroutines.
+
+USAGE: ./shadowsocks-asio [FLAGS] [OPTIONS]
+
+FLAGS:
+    --Server                   Server mode (Default)
+    --Client                   Client mode
+    -h, --help                 Print help information
+    -v, --version              Print version information
+    -V                         Verbose mode
+
+OPTIONS:
+    -s <server host>           Host name or IP address of your remote server
+    -p <server port>           Port number of your remote server
+    -l <local port>            Port number of your local server
+    -k <password>              Password of your remote server
+
+    -m <encrypt method>        Encrypt method:
+                               aes-128-gcm, aes-256-gcm,
+                               chacha20-ietf-poly1305 (Default)
+
+    --acl <file path>          Access control list
+    --url <SS-URL>             SS-URL
+~~~
+
+With SS-URL, you can connect to the remote server as shown above using the following command:
+
+~~~bash
+./shadowsocks-asio --Client -l 1080 --url ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpvY2Zibmo@ocfbnj.cn:5421
 ~~~
 
 ## How to build
