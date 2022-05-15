@@ -96,11 +96,11 @@ asio::awaitable<void> tcp_remote(config conf) {
             const std::string target_addr = fmt::format("{}:{}", target_endpoint.address().to_string(), target_endpoint.port());
 
             if (acl.is_block_outbound(target_endpoint.address().to_string())) {
-                spdlog::debug("Block outbound: {}:{}", target_addr);
+                spdlog::debug("Block outbound: {}", target_addr);
                 ec->close();
                 co_return;
             } else {
-                spdlog::debug("Allow outbound: {}:{}", target_addr);
+                spdlog::debug("Allow outbound: {}", target_addr);
             }
 
             // connect to target host
