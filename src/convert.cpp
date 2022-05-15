@@ -10,7 +10,8 @@ std::string method_to_string(crypto::aead::method method) {
         return "aes-128-gcm";
     case crypto::aead::aes_256_gcm:
         return "aes-256-gcm";
+    default:
+        assert(0);
+        return "";
     }
-
-    assert(0);
 }
