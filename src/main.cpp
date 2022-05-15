@@ -96,11 +96,12 @@ int main(int argc, char* argv[]) {
     auto encrypt_method = method_from_string(conf.method);
     if (!encrypt_method) {
         std::cout << "Invalid encrypt method: " + conf.method << "\n";
-        return 0;
+        return -1;
     }
 
     if (!conf.verify_params()) {
         print_usage();
+        return -1;
     }
 
     spdlog::debug("{}", conf.debug_str());
