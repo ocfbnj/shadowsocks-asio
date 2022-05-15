@@ -1,6 +1,7 @@
 // This file implements ss-local and ss-remote
 // See https://shadowsocks.org/en/wiki/Protocol.html
 
+#include <functional>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -24,7 +25,7 @@
 
 namespace {
 std::tuple<crypto::aead::method, std::vector<std::uint8_t>, access_control_list> prepare(const config& conf) {
-    crypto::aead::method method = *method_from_string(conf.method);
+    const crypto::aead::method method = *method_from_string(conf.method);
 
     // derive a key from password
     std::vector<std::uint8_t> key(crypto::aead::key_size(method));
@@ -38,6 +39,23 @@ std::tuple<crypto::aead::method, std::vector<std::uint8_t>, access_control_list>
 
     return {method, std::move(key), std::move(acl)};
 }
+
+asio::awaitable<void> listen_and_serve(asio::ip::tcp::endpoint listen_endpoint,
+                                       std::function<asio::awaitable<void>(tcp_socket)> serve) {
+    auto executor = co_await asio::this_coro::executor;
+
+    tcp_acceptor acceptor{executor, listen_endpoint};
+    spdlog::info("Listen on {}:{}", listen_endpoint.address().to_string(), listen_endpoint.port());
+
+    while (true) {
+        try {
+            tcp_socket peer = co_await acceptor.async_accept();
+            asio::co_spawn(executor, serve(std::move(peer)), asio::detached);
+        } catch (const std::exception& e) {
+            spdlog::warn("{}", e.what());
+        }
+    }
+}
 } // namespace
 
 asio::awaitable<void> tcp_remote(config conf) {
@@ -49,8 +67,8 @@ asio::awaitable<void> tcp_remote(config conf) {
                          acl = std::move(acl)](tcp_socket peer) -> asio::awaitable<void> {
         auto executor = co_await asio::this_coro::executor;
 
-        asio::ip::tcp::endpoint peer_endpoint = peer.remote_endpoint();
-        std::string peer_addr = fmt::format("{}:{}", peer_endpoint.address().to_string(), peer_endpoint.port());
+        const asio::ip::tcp::endpoint peer_endpoint = peer.remote_endpoint();
+        const std::string peer_addr = fmt::format("{}:{}", peer_endpoint.address().to_string(), peer_endpoint.port());
 
         if (acl.is_bypass(peer_endpoint.address().to_string())) {
             spdlog::debug("Reject client address: {}", peer_addr);
@@ -73,20 +91,21 @@ asio::awaitable<void> tcp_remote(config conf) {
 
             // resolve target endpoint
             tcp_resolver r{executor};
-            tcp_resolver::results_type results = co_await r.async_resolve(host, port);
-            const asio::ip::tcp::endpoint& endpoint = *results.begin();
+            const tcp_resolver::results_type results = co_await r.async_resolve(host, port);
+            const asio::ip::tcp::endpoint& target_endpoint = *results.begin();
+            const std::string target_addr = fmt::format("{}:{}", target_endpoint.address().to_string(), target_endpoint.port());
 
-            if (acl.is_block_outbound(endpoint.address().to_string())) {
-                spdlog::debug("Block outbound: {}:{}", endpoint.address().to_string(), endpoint.port());
+            if (acl.is_block_outbound(target_endpoint.address().to_string())) {
+                spdlog::debug("Block outbound: {}:{}", target_addr);
                 ec->close();
                 co_return;
             } else {
-                spdlog::debug("Allow outbound: {}:{}", endpoint.address().to_string(), endpoint.port());
+                spdlog::debug("Allow outbound: {}:{}", target_addr);
             }
 
             // connect to target host
             tcp_socket socket{executor};
-            co_await socket.async_connect(endpoint);
+            co_await socket.async_connect(target_endpoint);
             auto c = std::make_shared<connection>(std::move(socket));
 
             // proxy
@@ -106,20 +125,13 @@ asio::awaitable<void> tcp_remote(config conf) {
         }
     };
 
+    auto serve = [&serve_socket](tcp_socket peer) -> asio::awaitable<void> {
+        co_await serve_socket(std::move(peer));
+    };
+
     // listen
     asio::ip::tcp::endpoint listen_endpoint{asio::ip::make_address(conf.remote_host), static_cast<std::uint16_t>(std::stoul(conf.remote_port.data()))};
-    tcp_acceptor acceptor{executor, listen_endpoint};
-
-    spdlog::info("Listen on {}:{}", listen_endpoint.address().to_string(), listen_endpoint.port());
-
-    while (true) {
-        try {
-            tcp_socket peer = co_await acceptor.async_accept();
-            asio::co_spawn(executor, serve_socket(std::move(peer)), asio::detached);
-        } catch (const std::exception& e) {
-            spdlog::warn("{}", e.what());
-        }
-    }
+    co_await listen_and_serve(std::move(listen_endpoint), std::move(serve));
 }
 
 asio::awaitable<void> tcp_local(config conf) {
@@ -128,10 +140,10 @@ asio::awaitable<void> tcp_local(config conf) {
 
     // resolve ss-remote server endpoint
     tcp_resolver resolver{executor};
-    tcp_resolver::results_type results = co_await resolver.async_resolve(conf.remote_host.data(), conf.remote_port.data());
+    const tcp_resolver::results_type results = co_await resolver.async_resolve(conf.remote_host.data(), conf.remote_port.data());
     const asio::ip::tcp::endpoint& remote_endpoint = *results.begin();
 
-    spdlog::debug("Remote server: {}:{}", remote_endpoint.address().to_string(), remote_endpoint.port());
+    spdlog::info("Remote server: {}:{}", remote_endpoint.address().to_string(), remote_endpoint.port());
 
     auto serve_socket = [method = std::move(method),
                          key = std::move(key),
@@ -145,13 +157,13 @@ asio::awaitable<void> tcp_local(config conf) {
 
             // socks5 handshake
             std::string host, port;
-            std::string socks5_addr = co_await socks5::handshake(*c, host, port);
+            const std::string socks5_addr = co_await socks5::handshake(*c, host, port);
 
             // parse host
             tcp_resolver resolver{executor};
-            tcp_resolver::results_type results = co_await resolver.async_resolve(host, port);
+            const tcp_resolver::results_type results = co_await resolver.async_resolve(host, port);
             const asio::ip::tcp::endpoint& target_endpoint = *results.begin();
-            std::string ip = target_endpoint.address().to_string();
+            const std::string ip = target_endpoint.address().to_string();
 
             if (!acl.is_bypass(ip)) {
                 spdlog::debug("Proxy target address: {}:{} ({})", host, port, ip);
@@ -196,18 +208,11 @@ asio::awaitable<void> tcp_local(config conf) {
         }
     };
 
+    auto serve = [&serve_socket](tcp_socket peer) -> asio::awaitable<void> {
+        co_await serve_socket(std::move(peer));
+    };
+
     // listen
-    asio::ip::tcp::endpoint local_endpoint{asio::ip::tcp::v4(), static_cast<std::uint16_t>(std::stoul(conf.local_port.data()))};
-    tcp_acceptor acceptor{executor, local_endpoint};
-
-    spdlog::info("Listen on {}:{}", local_endpoint.address().to_string(), local_endpoint.port());
-
-    while (true) {
-        try {
-            tcp_socket peer = co_await acceptor.async_accept();
-            asio::co_spawn(executor, serve_socket(std::move(peer)), asio::detached);
-        } catch (const std::exception& e) {
-            spdlog::warn("{}", e.what());
-        }
-    }
+    const asio::ip::tcp::endpoint listen_endpoint{asio::ip::tcp::v4(), static_cast<std::uint16_t>(std::stoul(conf.local_port.data()))};
+    co_await listen_and_serve(std::move(listen_endpoint), std::move(serve));
 }
