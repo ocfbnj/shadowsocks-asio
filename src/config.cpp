@@ -13,11 +13,11 @@ std::string config::debug_str() const {
     };
 
     return fmt::format("\n=======================================\n"
-                       "| hostname: {}\n"
-                       "| port: {}\n"
-                       "| method: {}\n"
-                       "| password: {}\n"
-                       "| SS-URL: {}\n"
+                       "hostname: {}\n"
+                       "port: {}\n"
+                       "method: {}\n"
+                       "password: {}\n"
+                       "SS-URL: {}\n"
                        "=======================================",
                        ssurl.hostname,
                        ssurl.port,

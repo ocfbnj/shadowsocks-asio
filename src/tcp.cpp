@@ -27,7 +27,7 @@ asio::awaitable<void> tcp_remote(config conf) {
 
     // derive a key from password
     std::vector<std::uint8_t> key(crypto::aead::key_size(method));
-    crypto::deriveKey(std::span{reinterpret_cast<const std::uint8_t*>(conf.password.data()), conf.password.size()}, key);
+    crypto::derive_key(std::span{reinterpret_cast<const std::uint8_t*>(conf.password.data()), conf.password.size()}, key);
 
     // access control list
     access_control_list acl;
@@ -61,7 +61,7 @@ asio::awaitable<void> tcp_remote(config conf) {
             // get target endpoint
             ec->set_read_timeout(120); // 2 minutes
             std::string host, port;
-            co_await read_tgt_addr(*ec, host, port);
+            co_await socks5::read_tgt_addr(*ec, host, port);
             ec->set_read_timeout(0); // disable read timeout
 
             spdlog::debug("Target address: {}:{}", host, port);
@@ -117,7 +117,7 @@ asio::awaitable<void> tcp_local(config conf) {
 
     // derive a key from password
     std::vector<std::uint8_t> key(crypto::aead::key_size(method));
-    crypto::deriveKey(std::span{reinterpret_cast<const std::uint8_t*>(conf.password.data()), conf.password.size()}, key);
+    crypto::derive_key(std::span{reinterpret_cast<const std::uint8_t*>(conf.password.data()), conf.password.size()}, key);
 
     // access control list
     access_control_list acl;
@@ -147,7 +147,7 @@ asio::awaitable<void> tcp_local(config conf) {
 
             // socks5 handshake
             std::string host, port;
-            std::string socks5_addr = co_await handshake(*c, host, port);
+            std::string socks5_addr = co_await socks5::handshake(*c, host, port);
 
             // parse host
             tcp_resolver resolver{executor};
@@ -179,7 +179,7 @@ asio::awaitable<void> tcp_local(config conf) {
                 tcp_socket target_socket{executor};
                 co_await target_socket.async_connect(target_endpoint);
 
-                // establish a normal connection between ss-local and ss-remote
+                // establish a normal connection between ss-local and target host
                 auto conn = std::make_shared<connection>(std::move(target_socket));
 
                 // proxy
@@ -187,7 +187,7 @@ asio::awaitable<void> tcp_local(config conf) {
                 asio::co_spawn(strand, io_copy(c, conn), asio::detached);
                 asio::co_spawn(strand, io_copy(conn, c), asio::detached);
             }
-        } catch (const hand_shake_error& e) {
+        } catch (const socks5::handshake_error& e) {
             spdlog::warn("{}", e.what());
         } catch (const std::system_error& e) {
             if (e.code() != asio::error::eof && e.code() != asio::error::timed_out) {
