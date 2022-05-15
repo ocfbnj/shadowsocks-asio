@@ -97,7 +97,6 @@ asio::awaitable<void> tcp_remote(config conf) {
 
             if (acl.is_block_outbound(target_endpoint.address().to_string())) {
                 spdlog::debug("Block outbound: {}", target_addr);
-                ec->close();
                 co_return;
             } else {
                 spdlog::debug("Allow outbound: {}", target_addr);
