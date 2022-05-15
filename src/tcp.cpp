@@ -50,7 +50,7 @@ asio::awaitable<void> listen_and_serve(asio::ip::tcp::endpoint listen_endpoint,
     while (true) {
         try {
             tcp_socket peer = co_await acceptor.async_accept();
-            asio::co_spawn(executor, serve(std::move(peer)), asio::detached);
+            asio::co_spawn(asio::make_strand(executor), serve(std::move(peer)), asio::detached);
         } catch (const std::exception& e) {
             spdlog::warn("{}", e.what());
         }
@@ -82,10 +82,12 @@ asio::awaitable<void> tcp_remote(config conf) {
             auto ec = std::make_shared<encrypted_connection>(std::move(peer), method, key);
 
             // get target endpoint
-            ec->set_read_timeout(120); // 2 minutes
+            ec->set_read_timeout(60); // 1 minute
             std::string host, port;
             co_await socks5::read_tgt_addr(*ec, host, port);
-            ec->set_read_timeout(0); // disable read timeout
+
+            ec->set_read_timeout(0);        // disable read timeout
+            ec->set_connection_timeout(60); // 1 minute
 
             spdlog::debug("Target address: {}:{}", host, port);
 
@@ -108,9 +110,8 @@ asio::awaitable<void> tcp_remote(config conf) {
             auto c = std::make_shared<connection>(std::move(socket));
 
             // proxy
-            auto strand = asio::make_strand(executor);
-            asio::co_spawn(strand, io_copy(c, ec), asio::detached);
-            asio::co_spawn(strand, io_copy(ec, c), asio::detached);
+            asio::co_spawn(executor, io_copy(c, ec), asio::detached);
+            asio::co_spawn(executor, io_copy(ec, c), asio::detached);
         } catch (const crypto::aead::decryption_error& e) {
             spdlog::warn("{}: peer {}", e.what(), peer_addr);
         } catch (const encrypted_connection::duplicate_salt& e) {
@@ -178,9 +179,8 @@ asio::awaitable<void> tcp_local(config conf) {
                 co_await ec->write(std::span{reinterpret_cast<const std::uint8_t*>(socks5_addr.data()), socks5_addr.size()});
 
                 // proxy
-                auto strand = asio::make_strand(executor);
-                asio::co_spawn(strand, io_copy(c, ec), asio::detached);
-                asio::co_spawn(strand, io_copy(ec, c), asio::detached);
+                asio::co_spawn(executor, io_copy(c, ec), asio::detached);
+                asio::co_spawn(executor, io_copy(ec, c), asio::detached);
             } else {
                 spdlog::debug("Bypass target address: {}:{} ({})", host, port, ip);
 
@@ -192,9 +192,8 @@ asio::awaitable<void> tcp_local(config conf) {
                 auto conn = std::make_shared<connection>(std::move(target_socket));
 
                 // proxy
-                auto strand = asio::make_strand(executor);
-                asio::co_spawn(strand, io_copy(c, conn), asio::detached);
-                asio::co_spawn(strand, io_copy(conn, c), asio::detached);
+                asio::co_spawn(executor, io_copy(c, conn), asio::detached);
+                asio::co_spawn(executor, io_copy(conn, c), asio::detached);
             }
         } catch (const socks5::handshake_error& e) {
             spdlog::warn("{}", e.what());

@@ -5,17 +5,27 @@
 
 #include "connection.h"
 
-connection::connection(tcp_socket s) : socket(std::move(s)), timer(socket.get_executor()) {}
+connection::connection(tcp_socket s)
+    : socket(std::move(s)),
+      read_timer(socket.get_executor()),
+      connection_timer(socket.get_executor()) {}
+
+connection::~connection() {
+    // we have to cancel these timers first because they may be referencing the socket
+    read_timer.cancel();
+    connection_timer.cancel();
+}
 
 asio::awaitable<std::size_t> connection::read(std::span<std::uint8_t> buffer) {
-    update_timer();
+    read_timer.update();
+    connection_timer.update();
 
     std::size_t size = 0;
 
     try {
         size = co_await socket.async_read_some(asio::buffer(buffer.data(), buffer.size()));
     } catch (const std::system_error& e) {
-        if (timeout > 0 && timer_err.has_value()) {
+        if (read_timer.is_expired()) {
             throw std::system_error{asio::error::timed_out, "Read timeout"};
         } else {
             throw std::system_error{e};
@@ -26,33 +36,27 @@ asio::awaitable<std::size_t> connection::read(std::span<std::uint8_t> buffer) {
 }
 
 asio::awaitable<std::size_t> connection::write(std::span<const std::uint8_t> buffer) {
+    connection_timer.update();
+
     std::size_t size = co_await asio::async_write(socket, asio::buffer(buffer.data(), buffer.size()));
     co_return size;
 }
 
 void connection::close() {
-    std::error_code ignore_rrror;
-    socket.shutdown(asio::ip::tcp::socket::shutdown_send, ignore_rrror);
+    std::error_code ignore_error;
+    socket.shutdown(asio::ip::tcp::socket::shutdown_send, ignore_error);
 }
 
 void connection::set_read_timeout(int val) {
-    timeout = val;
-    update_timer();
+    read_timer.set_timeout(val, [this] {
+        std::error_code ignore_error;
+        socket.cancel(ignore_error);
+    });
 }
 
-void connection::update_timer() {
-    std::error_code ignore_rrror;
-    timer.cancel(ignore_rrror);
-    timer_err.reset();
-
-    if (timeout > 0) {
-        timer.expires_after(std::chrono::seconds(timeout));
-        timer.async_wait([this](const std::error_code& error) {
-            if (error != asio::error::operation_aborted) {
-                timer_err = error;
-                std::error_code ignore;
-                socket.cancel(ignore);
-            }
-        });
-    }
+void connection::set_connection_timeout(int val) {
+    connection_timer.set_timeout(val, [this] {
+        std::error_code ignore_error;
+        socket.cancel(ignore_error);
+    });
 }

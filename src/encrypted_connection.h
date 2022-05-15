@@ -28,6 +28,7 @@ public:
     void close();
 
     void set_read_timeout(int val);
+    void set_connection_timeout(int val);
 
 private:
     static constexpr std::size_t maximum_payload_size = 0x3FFF;

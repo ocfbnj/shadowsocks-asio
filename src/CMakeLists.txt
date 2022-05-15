@@ -10,7 +10,8 @@ add_executable(
     replay_protection.cpp
     socks5.cpp
     ss_url.cpp
-    tcp.cpp)
+    tcp.cpp
+    timer.cpp)
 
 if(UNIX AND NOT APPLE)
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
