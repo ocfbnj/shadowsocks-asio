@@ -89,6 +89,10 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    if (conf.method.empty()) {
+        conf.method = "chacha20-ietf-poly1305";
+    }
+
     auto encrypt_method = method_from_string(conf.method);
     if (!encrypt_method) {
         std::cout << "Invalid encrypt method: " + conf.method << "\n";
