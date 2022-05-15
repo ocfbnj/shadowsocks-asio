@@ -54,7 +54,7 @@ asio::awaitable<void> io_copy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
 
         w->set_read_timeout(5); // 5 seconds
 
-        if (e.code() != asio::error::eof && e.code() != asio::error::timed_out) {
+        if (e.code() != asio::error::eof) {
             spdlog::debug("{}", e.what());
         }
     }

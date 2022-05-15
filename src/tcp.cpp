@@ -117,7 +117,7 @@ asio::awaitable<void> tcp_remote(config conf) {
         } catch (const encrypted_connection::duplicate_salt& e) {
             spdlog::warn("{}: peer {}", e.what(), peer_addr);
         } catch (const std::system_error& e) {
-            if (e.code() != asio::error::eof && e.code() != asio::error::timed_out) {
+            if (e.code() != asio::error::eof) {
                 spdlog::debug("{}: peer {}", e.what(), peer_addr);
             }
         } catch (const std::exception& e) {

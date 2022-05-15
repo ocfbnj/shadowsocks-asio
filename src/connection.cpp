@@ -27,6 +27,8 @@ asio::awaitable<std::size_t> connection::read(std::span<std::uint8_t> buffer) {
     } catch (const std::system_error& e) {
         if (read_timer.is_expired()) {
             throw std::system_error{asio::error::timed_out, "Read timeout"};
+        } else if (connection_timer.is_expired()) {
+            throw std::system_error{asio::error::timed_out, "Connection timeout"};
         } else {
             throw std::system_error{e};
         }
@@ -38,7 +40,18 @@ asio::awaitable<std::size_t> connection::read(std::span<std::uint8_t> buffer) {
 asio::awaitable<std::size_t> connection::write(std::span<const std::uint8_t> buffer) {
     connection_timer.update();
 
-    std::size_t size = co_await asio::async_write(socket, asio::buffer(buffer.data(), buffer.size()));
+    std::size_t size = 0;
+
+    try {
+        size = co_await asio::async_write(socket, asio::buffer(buffer.data(), buffer.size()));
+    } catch (const std::system_error& e) {
+        if (connection_timer.is_expired()) {
+            throw std::system_error{asio::error::timed_out, "Connection timeout"};
+        } else {
+            throw std::system_error{e};
+        }
+    }
+
     co_return size;
 }
 
