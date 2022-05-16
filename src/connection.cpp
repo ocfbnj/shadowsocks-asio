@@ -73,3 +73,11 @@ void connection::set_connection_timeout(int val) {
         socket.cancel(ignore_error);
     });
 }
+
+asio::ip::tcp::endpoint connection::local_endpoint() const {
+    return socket.local_endpoint();
+}
+
+asio::ip::tcp::endpoint connection::remote_endpoint() const {
+    return socket.remote_endpoint();
+}

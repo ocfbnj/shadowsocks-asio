@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 #include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 #include "access_control_list.h"
 
@@ -47,7 +48,9 @@ access_control_list access_control_list::from_file(const std::string& path) {
         } else if (line == "[outbound_block_list]") {
             cur_list = &acl.outbound_block_list;
         } else {
-            cur_list->insert(line);
+            if (!cur_list->insert(line)) {
+                spdlog::warn("Couldn't insert to ip set: {}", line);
+            }
         }
     }
 

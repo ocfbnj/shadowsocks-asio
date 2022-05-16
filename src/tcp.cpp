@@ -109,6 +109,11 @@ asio::awaitable<void> tcp_remote(config conf) {
             co_await socket.async_connect(target_endpoint);
             auto c = std::make_shared<connection>(std::move(socket));
 
+            // Note:
+            // The ss-local may be disconnected at this point, and we can't be notified about this event.
+            // The reason is that `async_connect` may timeout while the ss-local may be disconnected in that period.
+            // So we may write a broken pipe after that.
+
             // proxy
             asio::co_spawn(executor, io_copy(c, ec), asio::detached);
             asio::co_spawn(executor, io_copy(ec, c), asio::detached);
@@ -117,9 +122,7 @@ asio::awaitable<void> tcp_remote(config conf) {
         } catch (const encrypted_connection::duplicate_salt& e) {
             spdlog::warn("{}: peer {}", e.what(), peer_addr);
         } catch (const std::system_error& e) {
-            if (e.code() != asio::error::eof) {
-                spdlog::debug("{}: peer {}", e.what(), peer_addr);
-            }
+            spdlog::debug("{}: peer {}", e.what(), peer_addr);
         } catch (const std::exception& e) {
             spdlog::warn("{}: peer {}", e.what(), peer_addr);
         }
@@ -198,9 +201,7 @@ asio::awaitable<void> tcp_local(config conf) {
         } catch (const socks5::handshake_error& e) {
             spdlog::warn("{}", e.what());
         } catch (const std::system_error& e) {
-            if (e.code() != asio::error::eof && e.code() != asio::error::timed_out) {
-                spdlog::debug("{}", e.what());
-            }
+            spdlog::debug("{}", e.what());
         } catch (const std::exception& e) {
             spdlog::warn("{}", e.what());
         }

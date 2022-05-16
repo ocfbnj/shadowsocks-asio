@@ -25,6 +25,9 @@ public:
     void set_read_timeout(int val);
     void set_connection_timeout(int val);
 
+    asio::ip::tcp::endpoint local_endpoint() const;
+    asio::ip::tcp::endpoint remote_endpoint() const;
+
 protected:
     tcp_socket socket;
 

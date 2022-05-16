@@ -2,17 +2,12 @@
 #define IP_SET
 
 #include <cstdint>
+#include <span>
 #include <string>
+#include <string_view>
 
 class ip_set {
 public:
-    ip_set() = default;
-    ip_set(const ip_set&) = delete;
-    ip_set& operator=(const ip_set&) = delete;
-    ip_set(ip_set&& other);
-    ip_set& operator=(ip_set&& other);
-    ~ip_set();
-
     /**
      * @par Example
      * @code
@@ -20,7 +15,7 @@ public:
      * set.insert("192.168.0.0/16");
      * @endcode
      */
-    void insert(const std::string& cidr);
+    bool insert(std::string_view cidr);
 
     /**
      * @par Example
@@ -29,7 +24,7 @@ public:
      * set.insert(0x12340000, 16);
      * @endcode
      */
-    void insert(std::uint32_t ip, std::uint8_t bits);
+    bool insert(std::span<const std::uint8_t> ip, std::uint8_t bits);
 
     /**
      * @par Example
@@ -39,7 +34,9 @@ public:
      * set.contains("192.168.0.1"); // return true
      * @endcode
      */
-    bool contains(const std::string& ip) const;
+    bool contains(std::string_view ip_str) const;
+
+    bool contains(std::span<const std::uint8_t> ip) const;
 
     /**
      * @brief clear the ip_set
@@ -61,7 +58,27 @@ private:
         bool is_complete = false;
     };
 
-    trie_node root;
+    class trie {
+    public:
+        trie() = default;
+        ~trie();
+
+        trie(const trie&) = delete;
+        trie& operator=(const trie&) = delete;
+
+        trie(trie&& other) noexcept;
+        trie& operator=(trie&& other) noexcept;
+
+        bool insert(std::span<const std::uint8_t> ip, std::uint8_t bits);
+        bool contains(std::span<const std::uint8_t> ip) const;
+        void clear();
+
+    private:
+        trie_node root;
+    };
+
+    trie ipv4;
+    trie ipv6;
 };
 
 #endif

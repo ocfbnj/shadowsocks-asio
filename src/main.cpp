@@ -1,7 +1,6 @@
 #include <cstring>
 #include <iostream>
 #include <optional>
-#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -12,8 +11,6 @@
 #include <asio/ts/io_context.hpp>
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
-
-#include <crypto/aead.h>
 
 #include "config.h"
 #include "convert.h"

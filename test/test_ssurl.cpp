@@ -9,7 +9,7 @@ struct test_case {
     ss_url ssurl;
 };
 
-const test_case test_cases[]{
+const test_case test_cases[] = {
     {
         .url = "ss://YWVzLTEyOC1nY206dGVzdA@192.168.100.1:8888",
         .ssurl = {
