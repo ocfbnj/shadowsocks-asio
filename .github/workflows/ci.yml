@@ -54,6 +54,8 @@ jobs:
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
             ./build/test/Release/test_ssurl
+            ./build/test/Release/test_ip_set
           else
             ./build/test/test_ssurl
+            ./build/test/test_ip_set
           fi
