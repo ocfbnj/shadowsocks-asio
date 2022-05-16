@@ -89,20 +89,19 @@ asio::awaitable<void> tcp_remote(config conf) {
             ec->set_read_timeout(0);        // disable read timeout
             ec->set_connection_timeout(60); // 1 minute
 
-            spdlog::debug("Target address: {}:{}", host, port);
+            const std::string target_addr = fmt::format("{}:{}", host, port);
 
-            // resolve target endpoint
-            tcp_resolver r{executor};
-            const tcp_resolver::results_type results = co_await r.async_resolve(host, port);
-            const asio::ip::tcp::endpoint& target_endpoint = *results.begin();
-            const std::string target_addr = fmt::format("{}:{}", target_endpoint.address().to_string(), target_endpoint.port());
-
-            if (acl.is_block_outbound(target_endpoint.address().to_string())) {
+            if (acl.is_block_outbound(host)) {
                 spdlog::debug("Block outbound: {}", target_addr);
                 co_return;
             } else {
                 spdlog::debug("Allow outbound: {}", target_addr);
             }
+
+            // resolve target endpoint
+            tcp_resolver r{executor};
+            const tcp_resolver::results_type results = co_await r.async_resolve(host, port);
+            const asio::ip::tcp::endpoint& target_endpoint = *results.begin();
 
             // connect to target host
             tcp_socket socket{executor};
@@ -161,15 +160,10 @@ asio::awaitable<void> tcp_local(config conf) {
             // socks5 handshake
             std::string host, port;
             const std::string socks5_addr = co_await socks5::handshake(*c, host, port);
+            const std::string target_addr = fmt::format("{}:{}", host, port);
 
-            // parse host
-            tcp_resolver resolver{executor};
-            const tcp_resolver::results_type results = co_await resolver.async_resolve(host, port);
-            const asio::ip::tcp::endpoint& target_endpoint = *results.begin();
-            const std::string ip = target_endpoint.address().to_string();
-
-            if (!acl.is_bypass(ip)) {
-                spdlog::debug("Proxy target address: {}:{} ({})", host, port, ip);
+            if (!acl.is_bypass(host)) {
+                spdlog::debug("Proxy target address: {}", target_addr);
 
                 // connect to ss-remote server
                 tcp_socket remote_socket{executor};
@@ -185,7 +179,13 @@ asio::awaitable<void> tcp_local(config conf) {
                 asio::co_spawn(executor, io_copy(c, ec), asio::detached);
                 asio::co_spawn(executor, io_copy(ec, c), asio::detached);
             } else {
-                spdlog::debug("Bypass target address: {}:{} ({})", host, port, ip);
+                spdlog::debug("Bypass target address: {}", target_addr);
+
+                // resolve target endpoint
+                tcp_resolver resolver{executor};
+                const tcp_resolver::results_type results = co_await resolver.async_resolve(host, port);
+                const asio::ip::tcp::endpoint& target_endpoint = *results.begin();
+                const std::string ip = target_endpoint.address().to_string();
 
                 // connect to target host
                 tcp_socket target_socket{executor};

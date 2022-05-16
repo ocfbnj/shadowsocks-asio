@@ -27,6 +27,7 @@ access_control_list access_control_list::from_file(const std::string& path) {
     }
 
     ip_set* cur_list = &acl.bypass_list;
+    rule_set* cur_rule_set = &acl.bypass_rules;
 
     std::string line;
     while (std::getline(ifs, line)) {
@@ -43,13 +44,22 @@ access_control_list access_control_list::from_file(const std::string& path) {
             acl.acl_mode = black_list;
         } else if (line == "[bypass_list]" || line == "[black_list]") {
             cur_list = &acl.bypass_list;
+            cur_rule_set = &acl.bypass_rules;
         } else if (line == "[proxy_list]" || line == "[white_list]") {
             cur_list = &acl.proxy_list;
+            cur_rule_set = &acl.proxy_rules;
         } else if (line == "[outbound_block_list]") {
             cur_list = &acl.outbound_block_list;
+            cur_rule_set = &acl.outbound_block_rules;
         } else {
             if (!cur_list->insert(line)) {
-                spdlog::warn("Couldn't insert to ip set: {}", line);
+                if (!cur_rule_set->insert(line)) {
+                    spdlog::warn("Couldn't insert to ip set and rule set: {}", line);
+                } else {
+                    spdlog::trace("Add to rule set: {}", line);
+                }
+            } else {
+                spdlog::trace("Add to ip set: {}", line);
             }
         }
     }
@@ -57,18 +67,18 @@ access_control_list access_control_list::from_file(const std::string& path) {
     return acl;
 }
 
-bool access_control_list::is_bypass(const std::string& ip) const {
-    if (bypass_list.contains(ip)) {
+bool access_control_list::is_bypass(const std::string& host) const {
+    if (bypass_list.contains(host) || bypass_rules.contains(host)) {
         return true;
     }
 
-    if (proxy_list.contains(ip)) {
+    if (proxy_list.contains(host) || proxy_rules.contains(host)) {
         return false;
     }
 
     return acl_mode == black_list;
 }
 
-bool access_control_list::is_block_outbound(const std::string& ip) const {
-    return outbound_block_list.contains(ip);
+bool access_control_list::is_block_outbound(const std::string& host) const {
+    return outbound_block_list.contains(host) || outbound_block_rules.contains(host);
 }

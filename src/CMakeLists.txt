@@ -8,6 +8,7 @@ add_executable(
     ip_set.cpp
     main.cpp
     replay_protection.cpp
+    rule_set.cpp
     socks5.cpp
     ss_url.cpp
     tcp.cpp

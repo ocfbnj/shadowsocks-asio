@@ -83,6 +83,8 @@ int main(int argc, char* argv[]) {
             conf.remote_port = url.port;
         } else if (!strcmp("-V", argv[i])) {
             spdlog::set_level(spdlog::level::debug);
+        } else if (!strcmp("-VV", argv[i])) {
+            spdlog::set_level(spdlog::level::trace);
         }
     }
 
