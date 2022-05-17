@@ -16,7 +16,7 @@ This project uses Asio network library, as well as the Coroutine and Concept fea
 
 TODO:
 
-- [ ] Add IPv6 and rules support for access control list.
+- [X] Add IPv6 and rules support for access control list.
 - [ ] Add socks4a support.
 - [ ] Replace `fmt` with `std::format` (lack of compiler support).
 - [ ] Replace `asio` with `std::net` (it has not been standardized).
