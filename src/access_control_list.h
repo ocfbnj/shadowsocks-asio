@@ -1,7 +1,7 @@
 #ifndef ACCESS_CONTROL_LIST_H
 #define ACCESS_CONTROL_LIST_H
 
-#include <string>
+#include <string_view>
 
 #include "ip_set.h"
 #include "rule_set.h"
@@ -13,10 +13,10 @@ public:
         black_list, // bypasses all addresses that didn't match any rules
     };
 
-    static access_control_list from_file(const std::string& path);
+    static access_control_list from_file(std::string_view path);
 
-    bool is_bypass(const std::string& host) const;
-    bool is_block_outbound(const std::string& host) const;
+    bool is_bypass(std::string_view ip, std::string_view host = {}) const;
+    bool is_block_outbound(std::string_view ip, std::string_view host = {}) const;
 
 private:
     ip_set bypass_list;

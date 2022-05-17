@@ -18,7 +18,7 @@ void trim_space(std::string& str) {
 }
 } // namespace
 
-access_control_list access_control_list::from_file(const std::string& path) {
+access_control_list access_control_list::from_file(std::string_view path) {
     access_control_list acl;
 
     std::ifstream ifs{path.data(), std::ifstream::in | std::ifstream::binary};
@@ -67,18 +67,46 @@ access_control_list access_control_list::from_file(const std::string& path) {
     return acl;
 }
 
-bool access_control_list::is_bypass(const std::string& host) const {
-    if (bypass_list.contains(host) || bypass_rules.contains(host)) {
+bool access_control_list::is_bypass(std::string_view ip, std::string_view host) const {
+    if (bypass_list.contains(ip)) {
         return true;
     }
 
-    if (proxy_list.contains(host) || proxy_rules.contains(host)) {
+    if (proxy_list.contains(ip)) {
         return false;
+    }
+
+    if (bypass_rules.contains(ip)) {
+        return true;
+    }
+
+    if (proxy_rules.contains(ip)) {
+        return false;
+    }
+
+    if (!host.empty() && host != ip) {
+        if (bypass_rules.contains(host)) {
+            return true;
+        }
+
+        if (proxy_rules.contains(host)) {
+            return false;
+        }
     }
 
     return acl_mode == black_list;
 }
 
-bool access_control_list::is_block_outbound(const std::string& host) const {
-    return outbound_block_list.contains(host) || outbound_block_rules.contains(host);
+bool access_control_list::is_block_outbound(std::string_view ip, std::string_view host) const {
+    if (outbound_block_list.contains(ip) || outbound_block_rules.contains(ip)) {
+        return true;
+    }
+
+    if (!host.empty() && host != ip) {
+        if (outbound_block_rules.contains(host)) {
+            return true;
+        }
+    }
+
+    return acl_mode == black_list;
 }

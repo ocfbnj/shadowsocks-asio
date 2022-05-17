@@ -1,6 +1,4 @@
-#include <algorithm>
 #include <cassert>
-#include <cctype>
 #include <functional>
 #include <optional>
 #include <vector>
@@ -186,7 +184,7 @@ bool ip_set::trie::contains(std::span<const std::uint8_t> ip) const {
 }
 
 void ip_set::trie::clear() {
-    std::function<void(trie_node*)> free = [&, this](trie_node* node) {
+    std::function<void(trie_node*)> free = [&](trie_node* node) {
         if (node) {
             free(node->left);
             free(node->right);

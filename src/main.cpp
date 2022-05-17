@@ -7,7 +7,6 @@
 #include <asio/co_spawn.hpp>
 #include <asio/detached.hpp>
 #include <asio/signal_set.hpp>
-#include <asio/ts/internet.hpp>
 #include <asio/ts/io_context.hpp>
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>

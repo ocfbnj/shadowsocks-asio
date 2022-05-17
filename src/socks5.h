@@ -58,7 +58,7 @@ enum class handshake_err_code {
 
 class handshake_error : public std::exception {
 public:
-    handshake_error(handshake_err_code err);
+    explicit handshake_error(handshake_err_code err);
 
     const char* what() const noexcept override;
 

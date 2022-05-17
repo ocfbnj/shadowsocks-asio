@@ -1,6 +1,6 @@
 #include "timer.h"
 
-timer::timer(asio::any_io_executor executor) : inner_timer(executor) {}
+timer::timer(const asio::any_io_executor& executor) : inner_timer(executor) {}
 
 bool timer::is_expired() const {
     return err.has_value();

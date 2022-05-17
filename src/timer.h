@@ -9,7 +9,7 @@
 
 class timer {
 public:
-    timer(asio::any_io_executor executor);
+    explicit timer(const asio::any_io_executor& executor);
 
     bool is_expired() const;
 
