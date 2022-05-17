@@ -9,8 +9,8 @@ bypass_list=`curl ${CHINA_IP_LIST_URL} -L`
 last_update_time=`date -u "+%Y-%m-%d %H:%M:%S +0000 UTC"`
 
 echo "# last update time: ${last_update_time}
+
 [proxy_all]
 
 [bypass_list]
-${bypass_list}
-"
+${bypass_list}"

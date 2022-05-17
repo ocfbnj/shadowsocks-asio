@@ -34,6 +34,9 @@ concept reader_writer_closer = reader<T> && writer<T> && closer<T>;
 template <typename T>
 concept conn = reader_writer_closer<T> && requires(T conn, int timeout) {
     { conn.set_read_timeout(timeout) } -> std::same_as<void>;
+    { conn.set_connection_timeout(timeout) } -> std::same_as<void>;
+    { conn.local_endpoint() } -> std::same_as<asio::ip::tcp::endpoint>;
+    { conn.remote_endpoint() } -> std::same_as<asio::ip::tcp::endpoint>;
 };
 
 constexpr auto buffer_size = 32768;
@@ -48,15 +51,10 @@ asio::awaitable<void> io_copy(std::shared_ptr<W> w, std::shared_ptr<R> r) {
             co_await w->write(std::span{buf.data(), size});
         }
     } catch (const std::system_error& e) {
-        if (e.code() == asio::error::eof) {
-            w->close();
-        }
-
+        w->close();
         w->set_read_timeout(5); // 5 seconds
 
-        if (e.code() != asio::error::eof && e.code() != asio::error::timed_out) {
-            spdlog::debug("{}", e.what());
-        }
+        spdlog::debug("{}", e.what());
     }
 }
 

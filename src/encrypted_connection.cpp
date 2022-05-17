@@ -81,6 +81,18 @@ void encrypted_connection::set_read_timeout(int val) {
     conn.set_read_timeout(val);
 }
 
+void encrypted_connection::set_connection_timeout(int val) {
+    conn.set_connection_timeout(val);
+}
+
+asio::ip::tcp::endpoint encrypted_connection::local_endpoint() const {
+    return conn.local_endpoint();
+}
+
+asio::ip::tcp::endpoint encrypted_connection::remote_endpoint() const {
+    return conn.remote_endpoint();
+}
+
 std::size_t encrypted_connection::salt_size() const {
     switch (cipher.get_method()) {
     case crypto::aead::chacha20_poly1305:

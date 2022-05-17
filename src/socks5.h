@@ -10,7 +10,8 @@
 
 #include "io.h"
 
-// ver is the value of VER field described in RFC 1928.
+namespace socks5 {
+// ver is the value of VER field as described in RFC 1928.
 constexpr auto ver = 0x05;
 
 // The maximum length of target address (1 + 1 + 255 + 2).
@@ -19,21 +20,21 @@ constexpr auto max_addr_len = 259;
 // The maximum length of request message (3 + max_addr_len).
 constexpr auto max_msg_len = 262;
 
-// SOCKS5 request command defined in RFC 1928 section 4.
+// SOCKS5 request command as defined in RFC 1928 section 4.
 enum class cmd : std::uint8_t {
     connect = 0x01,
     bind = 0x02,
     udp_associate = 0x03
 };
 
-// SOCKS5 address type defined in RFC 1928 section 5.
+// SOCKS5 address type as defined in RFC 1928 section 5.
 enum class atyp : std::uint8_t {
     ipv4 = 0x01,
     domainname = 0x03,
     ipv6 = 0x04
 };
 
-// SOCKS5 methods defined in RFC 1928 section 3.
+// SOCKS5 methods as defined in RFC 1928 section 3.
 enum class method : std::uint8_t {
     no_authentication = 0x00,
     gssapi = 0x01,
@@ -41,28 +42,28 @@ enum class method : std::uint8_t {
     no_acceptable = 0xff
 };
 
-// SOCKS5 commands defined in RFC 1928 section 4.
+// SOCKS5 commands as defined in RFC 1928 section 4.
 enum class command : std::uint8_t {
     connect = 0x01,
     bind = 0x02,
     udp = 0x03
 };
 
-enum class hand_shake_err_code {
+enum class handshake_err_code {
     version,
     method,
     command,
     atyp
 };
 
-class hand_shake_error : public std::exception {
+class handshake_error : public std::exception {
 public:
-    hand_shake_error(hand_shake_err_code err);
+    explicit handshake_error(handshake_err_code err);
 
     const char* what() const noexcept override;
 
 private:
-    hand_shake_err_code err_code;
+    handshake_err_code err_code;
 };
 
 // Read a SOCK5 address from r.
@@ -102,7 +103,7 @@ asio::awaitable<std::string> read_tgt_addr(reader auto& r, std::string& host, st
         socks5_addr.append(reinterpret_cast<const char*>(addr.data()), 16);
     } break;
     default:
-        throw hand_shake_error{hand_shake_err_code::atyp};
+        throw handshake_error{handshake_err_code::atyp};
     }
 
     std::uint16_t p;
@@ -122,7 +123,7 @@ asio::awaitable<std::string> handshake(reader_writer auto& rw, std::string& host
     std::size_t n_read = co_await read_full(rw, std::span{buf.data(), 2});
 
     if (buf[0] != ver) {
-        throw hand_shake_error{hand_shake_err_code::version};
+        throw handshake_error{handshake_err_code::version};
     }
 
     co_await read_full(rw, std::span{buf.data() + n_read, buf[1]});
@@ -135,7 +136,7 @@ asio::awaitable<std::string> handshake(reader_writer auto& rw, std::string& host
     }
 
     if (i == 2 + buf[1]) {
-        throw hand_shake_error{hand_shake_err_code::method};
+        throw handshake_error{handshake_err_code::method};
     }
 
     // ok
@@ -146,11 +147,11 @@ asio::awaitable<std::string> handshake(reader_writer auto& rw, std::string& host
     co_await read_full(rw, std::span{buf.data(), 3});
 
     if (buf[0] != ver) {
-        throw hand_shake_error{hand_shake_err_code::version};
+        throw handshake_error{handshake_err_code::version};
     }
 
     if (static_cast<command>(buf[1]) != command::connect) {
-        throw hand_shake_error{hand_shake_err_code::command};
+        throw handshake_error{handshake_err_code::command};
     }
 
     std::string socks5_addr = co_await read_tgt_addr(rw, host, port);
@@ -161,5 +162,5 @@ asio::awaitable<std::string> handshake(reader_writer auto& rw, std::string& host
 
     co_return socks5_addr;
 }
-
+} // namespace socks5
 #endif

@@ -3,15 +3,17 @@
 
 #include "socks5.h"
 
-hand_shake_error::hand_shake_error(hand_shake_err_code err) : err_code(err) {}
+namespace socks5 {
+handshake_error::handshake_error(handshake_err_code err) : err_code(err) {}
 
-const char* hand_shake_error::what() const noexcept {
-    static std::unordered_map<hand_shake_err_code, std::string_view> errToStr{
-        {hand_shake_err_code::version, "SOCKS version error"},
-        {hand_shake_err_code::method, "No supported method"},
-        {hand_shake_err_code::command, "No supported command"},
-        {hand_shake_err_code::atyp, "No supported address type"},
+const char* handshake_error::what() const noexcept {
+    static std::unordered_map<handshake_err_code, std::string_view> errToStr{
+        {handshake_err_code::version, "SOCKS version error"},
+        {handshake_err_code::method, "No supported method"},
+        {handshake_err_code::command, "No supported command"},
+        {handshake_err_code::atyp, "No supported address type"},
     };
 
     return errToStr[err_code].data();
 }
+} // namespace socks5

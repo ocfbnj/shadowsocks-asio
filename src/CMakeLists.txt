@@ -1,14 +1,18 @@
 add_executable(
     ${CMAKE_PROJECT_NAME}
     access_control_list.cpp
+    config.cpp
     connection.cpp
+    convert.cpp
     encrypted_connection.cpp
     ip_set.cpp
     main.cpp
     replay_protection.cpp
+    rule_set.cpp
     socks5.cpp
     ss_url.cpp
-    tcp.cpp)
+    tcp.cpp
+    timer.cpp)
 
 if(UNIX AND NOT APPLE)
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
