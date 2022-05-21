@@ -160,7 +160,7 @@ asio::awaitable<std::size_t> encrypted_connection::write_unencrypted_payload(std
         co_await conn.write(std::span{buf.data(), 2 + tag_size});
 
         // write encrypted payload
-        encrypt(std::span{std::data(in) + n_write, payload_len},
+        encrypt(std::span{in.data() + n_write, payload_len},
                 std::span{buf.data(), payload_len + tag_size});
         co_await conn.write(std::span{buf.data(), payload_len + tag_size});
 
