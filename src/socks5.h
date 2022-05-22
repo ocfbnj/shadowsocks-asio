@@ -20,13 +20,6 @@ constexpr auto max_addr_len = 259;
 // The maximum length of request message (3 + max_addr_len).
 constexpr auto max_msg_len = 262;
 
-// SOCKS5 request command as defined in RFC 1928 section 4.
-enum class cmd : std::uint8_t {
-    connect = 0x01,
-    bind = 0x02,
-    udp_associate = 0x03
-};
-
 // SOCKS5 address type as defined in RFC 1928 section 5.
 enum class atyp : std::uint8_t {
     ipv4 = 0x01,
